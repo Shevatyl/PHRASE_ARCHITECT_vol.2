@@ -1,0 +1,2105 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Miku MIDI Phrase Pack Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+/* ==========================================================================
+   デザイントークン
+   Miku（初音ミク）のテーマカラーであるティール(#39C5BB)をアクセントに、
+   DAW/シンセスタジオのような「暗い作業台」の質感を基調にする。
+   ========================================================================== */
+:root{
+  --bg:#0B0E14;
+  --panel:#12161F;
+  --panel-alt:#171C28;
+  --border:#242B3B;
+  --border-soft:#1B2130;
+  --accent:#39C5BB;
+  --accent-dim:rgba(57,197,187,0.16);
+  --accent2:#FF6F91;
+  --accent2-dim:rgba(255,111,145,0.16);
+  --text:#E8ECF1;
+  --text-dim:#8992A6;
+  --text-faint:#5B6478;
+  --danger:#FF6B6B;
+  --font-display:'Space Grotesk',sans-serif;
+  --font-body:'Inter',sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+  --radius:10px;
+}
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-body);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:#2A3142;border-radius:6px;}
+::-webkit-scrollbar-thumb:hover{background:#3A4256;}
+
+/* ---------- ヘッダー ---------- */
+.app-header{
+  padding:14px 22px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  flex-shrink:0;
+  background:linear-gradient(180deg,#0D111A,#0B0E14);
+}
+.app-header .logo-dot{
+  width:10px;height:10px;border-radius:50%;
+  background:var(--accent);
+  box-shadow:0 0 10px var(--accent);
+  display:inline-block;
+  margin-right:2px;
+}
+.app-header h1{
+  font-family:var(--font-display);
+  font-size:18px;
+  font-weight:700;
+  margin:0;
+  letter-spacing:0.2px;
+}
+.app-header .subtitle{
+  font-size:12px;
+  color:var(--text-dim);
+  font-family:var(--font-mono);
+}
+.about-btn{
+  margin-left:auto;
+  background:var(--panel-alt);
+  border:1px solid var(--border);
+  color:var(--text-dim);
+  padding:6px 14px;
+  border-radius:999px;
+  font-size:12px;
+  font-family:var(--font-mono);
+  cursor:pointer;
+  transition:all .15s ease;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.about-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+.modal-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(5,7,12,0.65);
+  backdrop-filter:blur(2px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:1000;
+}
+.modal-overlay[hidden]{display:none;}
+.modal-box{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:26px 28px;
+  width:320px;
+  max-width:90vw;
+  text-align:center;
+  box-shadow:0 10px 40px rgba(0,0,0,0.5);
+  position:relative;
+}
+.modal-box .logo-dot{
+  width:12px;height:12px;border-radius:50%;
+  background:var(--accent);
+  box-shadow:0 0 12px var(--accent);
+  display:inline-block;
+  margin-bottom:14px;
+}
+.modal-box h2{
+  font-family:var(--font-display);
+  font-size:16px;
+  margin:0 0 14px 0;
+}
+.modal-box p{
+  font-size:13px;
+  color:var(--text-dim);
+  margin:6px 0;
+  line-height:1.6;
+}
+.modal-box p.credit-label{
+  font-size:11px;
+  color:var(--text-faint);
+  font-family:var(--font-mono);
+  letter-spacing:0.5px;
+  text-transform:uppercase;
+  margin-top:16px;
+}
+.modal-box p.credit-value{
+  font-size:14px;
+  color:var(--text);
+  font-weight:600;
+}
+.modal-close{
+  position:absolute;
+  top:10px; right:12px;
+  background:none;
+  border:none;
+  color:var(--text-faint);
+  font-size:16px;
+  cursor:pointer;
+  line-height:1;
+  padding:4px;
+}
+.modal-close:hover{color:var(--accent);}
+
+.tone-select-wrap{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  margin-right:4px;
+}
+.tone-select-wrap span.lbl{
+  font-size:11.5px;
+  color:var(--text-dim);
+  font-family:var(--font-mono);
+  white-space:nowrap;
+}
+.tone-select-wrap select{
+  width:auto;
+  padding:6px 8px;
+  font-size:12px;
+}
+
+/* ---------- メインレイアウト（左:設定 / 右:プレビュー） ---------- */
+.main{
+  flex:1;
+  display:flex;
+  min-height:0;
+  overflow:hidden;
+}
+.settings-panel{
+  width:400px;
+  flex-shrink:0;
+  overflow-y:auto;
+  padding:18px 18px 40px 18px;
+  border-right:1px solid var(--border);
+  background:var(--panel);
+}
+.preview-panel{
+  flex:1;
+  overflow-y:auto;
+  padding:18px 22px 40px 22px;
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+  min-width:0;
+}
+
+/* ---------- 設定セクション共通 ---------- */
+.section{
+  margin-bottom:22px;
+  padding-bottom:18px;
+  border-bottom:1px solid var(--border-soft);
+}
+.section:last-child{border-bottom:none;}
+.section h3{
+  font-family:var(--font-display);
+  font-size:12.5px;
+  letter-spacing:1.2px;
+  text-transform:uppercase;
+  color:var(--accent);
+  margin:0 0 10px 0;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.section .hint{
+  font-size:11.5px;
+  color:var(--text-faint);
+  margin:6px 0 0 0;
+  line-height:1.5;
+}
+.chip-group{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+}
+.chip{
+  position:relative;
+}
+.chip input{
+  position:absolute;
+  opacity:0;
+  width:100%;height:100%;
+  cursor:pointer;
+  margin:0;
+}
+.chip label{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  padding:6px 12px;
+  border-radius:999px;
+  border:1px solid var(--border);
+  background:var(--panel-alt);
+  font-size:12.5px;
+  color:var(--text-dim);
+  cursor:pointer;
+  transition:all .15s ease;
+  user-select:none;
+}
+.chip input:checked + label{
+  border-color:var(--accent);
+  color:var(--accent);
+  background:var(--accent-dim);
+}
+.chip input:focus-visible + label{
+  outline:2px solid var(--accent);
+  outline-offset:1px;
+}
+
+.radio-row{
+  display:flex;
+  gap:14px;
+  margin-bottom:10px;
+}
+.radio-row label{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:13px;
+  color:var(--text);
+  cursor:pointer;
+}
+.radio-row input{accent-color:var(--accent);cursor:pointer;}
+
+select, input[type="text"], input[type="number"]{
+  width:100%;
+  background:var(--panel-alt);
+  border:1px solid var(--border);
+  color:var(--text);
+  padding:8px 10px;
+  border-radius:8px;
+  font-family:var(--font-body);
+  font-size:13px;
+}
+select:focus, input:focus{outline:2px solid var(--accent);outline-offset:1px;}
+
+.slider-row{
+  display:grid;
+  grid-template-columns:74px 1fr 38px;
+  align-items:center;
+  gap:10px;
+  margin-bottom:9px;
+  font-size:12.5px;
+}
+.slider-row span.label{color:var(--text-dim);}
+.slider-row span.val{
+  font-family:var(--font-mono);
+  color:var(--accent);
+  text-align:right;
+}
+input[type="range"]{
+  -webkit-appearance:none;
+  width:100%;
+  height:4px;
+  border-radius:2px;
+  background:var(--border);
+  accent-color:var(--accent);
+}
+
+.seed-row{display:flex;gap:8px;align-items:center;}
+.seed-row input[type="text"]{flex:1;font-family:var(--font-mono);}
+.toggle-inline{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-dim);white-space:nowrap;}
+.toggle-inline input{accent-color:var(--accent);}
+
+.small-btn{
+  background:var(--panel-alt);
+  border:1px solid var(--border);
+  color:var(--text-dim);
+  padding:6px 10px;
+  border-radius:7px;
+  font-size:12px;
+  cursor:pointer;
+  transition:all .15s ease;
+}
+.small-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* ---------- プレビューパネル ---------- */
+.card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:16px;
+}
+.preview-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.preview-title{
+  font-family:var(--font-display);
+  font-size:15px;
+  font-weight:700;
+}
+.preview-tags{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  margin-top:6px;
+}
+.tag{
+  font-size:11px;
+  font-family:var(--font-mono);
+  padding:2px 8px;
+  border-radius:5px;
+  background:var(--panel-alt);
+  color:var(--text-dim);
+  border:1px solid var(--border);
+}
+.tag.accent{color:var(--accent);border-color:var(--accent);}
+.tag.accent2{color:var(--accent2);border-color:var(--accent2);}
+
+.transport{
+  display:flex;
+  gap:8px;
+}
+.transport button{
+  width:38px;height:38px;
+  border-radius:50%;
+  border:1px solid var(--border);
+  background:var(--panel-alt);
+  color:var(--text);
+  cursor:pointer;
+  font-size:14px;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s ease;
+}
+.transport button:hover{border-color:var(--accent);color:var(--accent);}
+.transport button.play-active{
+  background:var(--accent);
+  color:#04211F;
+  border-color:var(--accent);
+  box-shadow:0 0 14px var(--accent-dim);
+}
+.transport button:disabled{opacity:0.35;cursor:not-allowed;}
+
+canvas.roll{
+  width:100%;
+  height:220px;
+  display:block;
+  border-radius:8px;
+  margin-top:12px;
+  background:var(--panel-alt);
+}
+
+.empty-note{
+  color:var(--text-faint);
+  font-size:13px;
+  padding:30px 10px;
+  text-align:center;
+  border:1px dashed var(--border);
+  border-radius:8px;
+}
+
+/* ---------- 生成結果リスト ---------- */
+.results-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:10px;
+}
+.results-header h3{
+  font-family:var(--font-display);
+  font-size:13px;
+  color:var(--text);
+  margin:0;
+}
+.results-actions{display:flex;gap:8px;}
+.results-list{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  max-height:340px;
+  overflow-y:auto;
+}
+.result-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:8px 10px;
+  border-radius:8px;
+  border:1px solid var(--border);
+  background:var(--panel-alt);
+  font-size:12.5px;
+}
+.result-row.active{border-color:var(--accent);background:var(--accent-dim);}
+.result-row .fname{
+  font-family:var(--font-mono);
+  flex:1;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:var(--text);
+}
+.result-row .fmeta{color:var(--text-faint);font-size:11px;white-space:nowrap;}
+.result-row button{
+  background:transparent;
+  border:1px solid var(--border);
+  color:var(--text-dim);
+  border-radius:6px;
+  padding:4px 8px;
+  font-size:11px;
+  cursor:pointer;
+}
+.result-row button:hover{border-color:var(--accent);color:var(--accent);}
+
+/* ---------- 下部：生成バー ---------- */
+.generate-bar{
+  flex-shrink:0;
+  border-top:1px solid var(--border);
+  background:linear-gradient(180deg,#0D111A,#0B0E14);
+  padding:14px 22px;
+  display:flex;
+  align-items:center;
+  gap:18px;
+  flex-wrap:wrap;
+}
+.count-group{display:flex;gap:6px;align-items:center;}
+.count-group span.lbl{font-size:12px;color:var(--text-dim);margin-right:4px;}
+.count-radio input{position:absolute;opacity:0;}
+.count-radio label{
+  padding:7px 14px;
+  border-radius:8px;
+  border:1px solid var(--border);
+  color:var(--text-dim);
+  font-family:var(--font-mono);
+  font-size:12.5px;
+  cursor:pointer;
+}
+.count-radio input:checked + label{
+  border-color:var(--accent);
+  color:var(--accent);
+  background:var(--accent-dim);
+}
+.generate-btn{
+  margin-left:auto;
+  background:var(--accent);
+  color:#04211F;
+  border:none;
+  padding:13px 30px;
+  border-radius:10px;
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:14.5px;
+  letter-spacing:0.3px;
+  cursor:pointer;
+  box-shadow:0 0 0 rgba(57,197,187,0);
+  transition:box-shadow .2s ease, transform .1s ease;
+}
+.generate-btn:hover{box-shadow:0 0 22px var(--accent-dim);}
+.generate-btn:active{transform:scale(0.98);}
+.generate-btn:disabled{opacity:0.5;cursor:progress;}
+.status-text{
+  font-family:var(--font-mono);
+  font-size:12px;
+  color:var(--text-dim);
+  min-width:140px;
+}
+
+@media (max-width: 920px){
+  .main{flex-direction:column;overflow:auto;}
+  .settings-panel{width:100%;max-height:none;border-right:none;border-bottom:1px solid var(--border);}
+  body{overflow:auto;height:auto;}
+  .generate-bar{position:sticky;bottom:0;}
+}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <span class="logo-dot"></span>
+  <h1>Miku MIDI Phrase Pack Generator</h1>
+  <span class="subtitle">SMF Format0 / 120PPQ</span>
+  <button class="about-btn" id="btn-about" title="About">ℹ about</button>
+</header>
+
+<div class="modal-overlay" id="about-modal" hidden>
+  <div class="modal-box">
+    <button class="modal-close" id="btn-about-close" title="閉じる">✕</button>
+    <span class="logo-dot"></span>
+    <h2>Miku MIDI Phrase Pack Generator</h2>
+    <p class="credit-label">Created by</p>
+    <p class="credit-value">TK Music Lab</p>
+    <p class="credit-label">Author</p>
+    <p class="credit-value">Shevatyl</p>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- ============================= 左：設定パネル ============================= -->
+  <aside class="settings-panel">
+
+    <div class="section">
+      <h3>① 小節数</h3>
+      <div class="chip-group" id="group-bar"></div>
+      <p class="hint">生成するフレーズの長さです。複数選択すると、生成時にランダムで割り当てられます。</p>
+    </div>
+
+    <div class="section">
+      <h3>② フレーズタイプ</h3>
+      <div class="chip-group" id="group-phrase"></div>
+      <p class="hint">サビ(Chorus)・フック(Hook)は高音域を積極的に使用し、最高音を1〜2回だけ使うクライマックスを含みます。</p>
+    </div>
+
+    <div class="section">
+      <h3>③ 歌唱スタイル</h3>
+      <div class="chip-group" id="group-style"></div>
+      <p class="hint">リズム密度・跳躍の大きさ・ベロシティ傾向がスタイルごとに変化します。</p>
+    </div>
+
+    <div class="section">
+      <h3>④ キー・スケール</h3>
+      <select id="key-select" style="margin-bottom:8px;"></select>
+      <select id="scale-select"></select>
+      <p class="hint">選択したキー・スケールに応じて、メロディとコードの構成音（ダイアトニックコード）が自動的に正しく算出されます。</p>
+    </div>
+
+    <div class="section">
+      <h3>⑤ コード進行</h3>
+      <div class="radio-row">
+        <label><input type="radio" name="chord-mode" value="random" checked> ランダム生成</label>
+        <label><input type="radio" name="chord-mode" value="fixed"> 固定コード</label>
+      </div>
+      <div id="chord-random-block">
+        <div class="chip-group" id="group-chord"></div>
+        <p class="hint">選択したコードの中から小節ごとにランダムで割り当てます（I / ii / iii / IV / V / vi）。</p>
+      </div>
+      <div id="chord-fixed-block" style="display:none;">
+        <select id="chord-preset"></select>
+        <p class="hint">選んだ進行を小節数に合わせて繰り返し使用します。</p>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>⑥ 音価バランス</h3>
+      <div id="duration-sliders"></div>
+      <p class="hint">各音価の出現しやすさ（重み）です。内部で自動的に正規化されます。初期値は「8分音符主体、時々16分」のミク的バランスです。</p>
+    </div>
+
+    <div class="section">
+      <h3>⑦ ランダム性（Seed）</h3>
+      <div class="seed-row">
+        <input type="text" id="seed-input" placeholder="例: miku2026" value="miku2026">
+        <label class="toggle-inline"><input type="checkbox" id="seed-fixed"> Seed固定</label>
+      </div>
+      <p class="hint">Seedを固定すると同じ設定から常に同じメロディ群が再生成されます。チェックを外すと毎回ランダムです。</p>
+    </div>
+
+    <div class="section">
+      <h3>⑧ テンポ</h3>
+      <div class="slider-row">
+        <span class="label">Tempo</span>
+        <input type="range" min="60" max="200" value="120" id="tempo-slider">
+        <span class="val" id="tempo-slider-val">120</span>
+      </div>
+      <p class="hint">生成されるMIDIファイルの再生テンポ（BPM）です。試聴の再生速度にも反映されます。</p>
+    </div>
+
+  </aside>
+
+  <!-- ============================= 右：プレビューパネル ============================= -->
+  <section class="preview-panel">
+
+    <div class="card" id="preview-card">
+      <div class="preview-header">
+        <div>
+          <div class="preview-title" id="preview-title">プレビュー待機中</div>
+          <div class="preview-tags" id="preview-tags"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="tone-select-wrap">
+            <span class="lbl">音色</span>
+            <select id="tone-select">
+              <option value="original">オリジナル</option>
+              <option value="dark">ダーク</option>
+              <option value="whisper">ウィスパー</option>
+            </select>
+          </div>
+          <label class="toggle-inline"><input type="checkbox" id="chord-playback-toggle"> コード再生</label>
+          <div class="tone-select-wrap" id="pa-send-wrap" style="display:none;">
+            <span class="lbl">PA送信先</span>
+            <select id="pa-target-slot"><option value="A">Global A</option><option value="Ap">Global A'</option></select>
+          </div>
+          <button class="small-btn" id="btn-send-pa" style="display:none;" title="PHRASE_ARCHITECTのGlobal Motifへ送信">→PA</button>
+          <div class="transport">
+            <button id="btn-play" title="再生">▶</button>
+            <button id="btn-stop" title="停止" disabled>■</button>
+          </div>
+        </div>
+      </div>
+      <canvas class="roll" id="piano-roll"></canvas>
+      <div id="empty-note" class="empty-note">まだ何も生成されていません。左のパネルで設定し、下の「生成する」を押してください。</div>
+    </div>
+
+    <div class="card">
+      <div class="results-header">
+        <h3>生成結果 <span id="results-count" style="color:var(--text-faint);font-weight:400;"></span></h3>
+        <div class="results-actions">
+          <button class="small-btn" id="btn-zip">ZIPで一括ダウンロード</button>
+          <button class="small-btn" id="btn-clear">クリア</button>
+        </div>
+      </div>
+      <div class="results-list" id="results-list"></div>
+    </div>
+
+  </section>
+</div>
+
+<!-- ============================= 下：生成バー ============================= -->
+<footer class="generate-bar">
+  <div class="count-group">
+    <span class="lbl">生成数</span>
+    <span class="count-radio"><input type="radio" name="batch-count" id="count-1" value="1" checked><label for="count-1">1</label></span>
+    <span class="count-radio"><input type="radio" name="batch-count" id="count-10" value="10"><label for="count-10">10</label></span>
+    <span class="count-radio"><input type="radio" name="batch-count" id="count-50" value="50"><label for="count-50">50</label></span>
+    <span class="count-radio"><input type="radio" name="batch-count" id="count-100" value="100"><label for="count-100">100</label></span>
+  </div>
+  <div class="status-text" id="status-text"></div>
+  <button class="generate-btn" id="btn-generate">🎵 生成する</button>
+</footer>
+
+<script>
+/* ============================================================================
+ * Miku MIDI Phrase Pack Generator
+ * ----------------------------------------------------------------------------
+ * すべてブラウザ内で完結する、初音ミク向け歌メロMIDI素材のバッチ生成ツール。
+ * 大まかな構成：
+ *   1. 音楽理論の定数（スケール／コード／音域プロファイル／スタイル設定）
+ *   2. 疑似乱数（シード固定可能）
+ *   3. メロディ生成エンジン（モチーフ生成・展開・コード進行・リズム・音域制御）
+ *   4. SMF(Standard MIDI File) Format0 のバイナリ書き出し
+ *   5. Web Audioによる試聴（簡易シンセ + ビブラート）
+ *   6. ピアノロール描画（Canvas）
+ *   7. UI制御・バッチ生成・ZIP出力
+ * ==========================================================================*/
+
+'use strict';
+
+/* ============================================================================
+ * 1. 音楽理論の定数
+ * ==========================================================================*/
+
+// PPQ（Pulses Per Quarter note）= 四分音符あたりのtick数。仕様で120指定。
+const PPQ = 120;
+// 4/4拍子固定。1小節 = 四分音符4つ分 = 480 tick。
+const TICKS_PER_BAR = PPQ * 4;
+
+// 音価名 → tick数
+const NOTE_TICKS = {
+  whole: PPQ * 4,      // 480
+  half: PPQ * 2,        // 240
+  quarter: PPQ,          // 120
+  eighth: PPQ / 2,        // 60
+  sixteenth: PPQ / 4      // 30
+};
+const DURATION_NAMES = ['whole', 'half', 'quarter', 'eighth', 'sixteenth'];
+
+// Cメジャースケールの半音オフセット（C=0を基準とした音程）
+// 度数: C D E F G A B
+const SCALE_STEPS = [0, 2, 4, 5, 7, 9, 11];
+
+// 選択可能なスケール定義（度数0〜6の半音オフセット、Cルート基準）
+const SCALE_DEFS = {
+  major:          { steps: [0, 2, 4, 5, 7, 9, 11], ja: 'メジャー（Ionian）' },
+  natural_minor:  { steps: [0, 2, 3, 5, 7, 8, 10], ja: 'ナチュラルマイナー（Aeolian）' },
+  harmonic_minor: { steps: [0, 2, 3, 5, 7, 8, 11], ja: 'ハーモニックマイナー' },
+  dorian:         { steps: [0, 2, 3, 5, 7, 9, 10], ja: 'ドリアン' },
+  mixolydian:     { steps: [0, 2, 4, 5, 7, 9, 10], ja: 'ミクソリディアン' },
+  major_pentatonic:      { steps: [0, 2, 4, 7, 9], ja: 'メジャーペンタトニック' },
+  minor_pentatonic:      { steps: [0, 3, 5, 7, 10], ja: 'マイナーペンタトニック' },
+  diminished:            { steps: [0, 2, 3, 5, 6, 8, 9, 11], ja: 'ディミニッシュスケール' },
+  combination_diminished:{ steps: [0, 1, 3, 4, 6, 7, 9, 10], ja: 'コンビネーションオブディミニッシュ' },
+  whole_tone:            { steps: [0, 2, 4, 6, 8, 10], ja: 'ホールトーンスケール' }
+};
+const SCALE_IDS = ['major', 'natural_minor', 'harmonic_minor', 'dorian', 'mixolydian', 'major_pentatonic', 'minor_pentatonic', 'diminished', 'combination_diminished', 'whole_tone'];
+
+// ダイアトニックコード（トライアド）は選択されたスケールの度数から3度堆積で動的に算出する。
+// CHORD_NAMESは度数ラベル（I=1度, ii=2度...）で、スケールが変わっても共通して使い回せる。
+const CHORD_NAMES = ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii'];
+const CHORD_DEGREE_INDEX = { 'I': 0, 'ii': 1, 'iii': 2, 'IV': 3, 'V': 4, 'vi': 5, 'vii': 6 };
+
+// 指定スケールの度数idx(0-based, スケール音数で剰余)から3度堆積のトライアド構成音（半音オフセット、Cルート基準）を得る。
+// ペンタトニック（5音）・ディミニッシュ／コンビネーションオブディミニッシュ（8音）・ホールトーン（6音）等、
+// 7音以外のスケールでも正しく動作するよう、剰余は固定の7ではなくscaleSteps.lengthを使用する。
+function getChordTonesForDegree(scaleSteps, degreeIndex) {
+  const n = scaleSteps.length;
+  const idx = ((degreeIndex % n) + n) % n;
+  const thirdIdx = (idx + 2) % n;
+  const fifthIdx = (idx + 4) % n;
+  const root = scaleSteps[idx];
+  const third = scaleSteps[thirdIdx] + (thirdIdx < idx ? 12 : 0);
+  const fifth = scaleSteps[fifthIdx] + (fifthIdx < idx ? 12 : 0);
+  return [root, third, fifth];
+}
+
+// コード名（ローマ数字 'I','ii',... または数値度数 '1','2',...）を度数indexへ変換する。
+// 7音スケールはローマ数字表記、それ以外のスケールは数値表記の度数名を使う。
+function nameToDegreeIndex(chordName) {
+  if (Object.prototype.hasOwnProperty.call(CHORD_DEGREE_INDEX, chordName)) return CHORD_DEGREE_INDEX[chordName];
+  const num = parseInt(chordName, 10);
+  return isNaN(num) ? 0 : (num - 1);
+}
+
+// 指定スケールIDに応じたコード度数名のリストを返す（7音スケール→ローマ数字、それ以外→数値）
+function getScaleDegreeNames(scaleId) {
+  const steps = (SCALE_DEFS[scaleId] || SCALE_DEFS.major).steps;
+  if (steps.length === 7) return CHORD_NAMES.slice();
+  const arr = [];
+  for (let i = 1; i <= steps.length; i++) arr.push(String(i));
+  return arr;
+}
+
+// スケール音数ごとの固定コード進行プリセット（7音以外のスケール用）
+const CHORD_PRESETS_BY_LENGTH = {
+  5: {
+    '1 - 4 - 5 - 1': ['1', '4', '5', '1'],
+    '1 - 5 - 4 - 1': ['1', '5', '4', '1'],
+    '1 - 2 - 4 - 5': ['1', '2', '4', '5']
+  },
+  6: {
+    '1 - 3 - 5 - 1': ['1', '3', '5', '1'],
+    '1 - 4 - 1 - 5': ['1', '4', '1', '5'],
+    '1 - 2 - 4 - 6': ['1', '2', '4', '6']
+  },
+  8: {
+    '1 - 3 - 5 - 7': ['1', '3', '5', '7'],
+    '1 - 4 - 6 - 8': ['1', '4', '6', '8'],
+    '1 - 3 - 6 - 8': ['1', '3', '6', '8']
+  }
+};
+
+// 指定スケールIDに応じた固定コード進行プリセット一覧を返す
+function getChordPresetsForScale(scaleId) {
+  const steps = (SCALE_DEFS[scaleId] || SCALE_DEFS.major).steps;
+  if (steps.length === 7) return CHORD_PRESETS;
+  return CHORD_PRESETS_BY_LENGTH[steps.length] || CHORD_PRESETS_BY_LENGTH[7];
+}
+
+// 固定コード進行プリセット（J-POP/ボカロ曲でよく使われる進行を用意）
+const CHORD_PRESETS = {
+  'I - V - vi - IV': ['I', 'V', 'vi', 'IV'],
+  'vi - IV - I - V': ['vi', 'IV', 'I', 'V'],
+  'I - vi - IV - V': ['I', 'vi', 'IV', 'V'],
+  'IV - V - iii - vi': ['IV', 'V', 'iii', 'vi'],
+  'I - IV - V - IV': ['I', 'IV', 'V', 'IV'],
+  'I - V - IV - V': ['I', 'V', 'IV', 'V']
+};
+
+const KEY_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+// フレーズタイプごとの音域プロファイル（MIDIノート番号。C4=60基準）
+// 全体はミクらしい E3(52)〜E5(76) を中心に、サビ/フックだけ最高音域とクライマックスを許可。
+// climaxRange: サビ等で使う「ここぞ」の高音域（A4=69〜E5=76）
+const GLOBAL_LOW = 48;  // C3
+const GLOBAL_HIGH = 79; // G5
+
+const PHRASE_RANGE = {
+  Verse:      { low: 52, high: 69, climax: false, ja: 'Verse（Aメロ）' },              // E3-A4
+  PreChorus:  { low: 55, high: 72, climax: false, ja: 'Pre Chorus（Bメロ）' },          // G3-C5
+  Chorus:     { low: 60, high: 76, climax: true,  climaxRange: [69, 76], ja: 'Chorus（サビ）' }, // C4-E5 / climax A4-E5
+  Bridge:     { low: 57, high: 74, climax: false, ja: 'Bridge（ブリッジ）' },           // A3-D5
+  Hook:       { low: 60, high: 76, climax: true,  climaxRange: [69, 76], ja: 'Hook（フック）' }, // C4-E5 / climax A4-E5
+  Ending:     { low: 52, high: 72, climax: false, ja: 'Ending（エンディング）', endingSustain: true } // E3-C5
+};
+const PHRASE_TYPE_IDS = ['Verse', 'PreChorus', 'Chorus', 'Bridge', 'Hook', 'Ending'];
+
+// 歌唱スタイルごとの生成パラメータ
+//  repeatProb        : 同音連打の確率
+//  leapProb          : コードトーンへの跳躍進行の確率
+//  octaveLeapProb    : オクターブ跳躍の確率（基本的に低め）
+//  restProb          : ブレス（休符）の出やすさ
+//  syncopationProb   : シンコペーション（食い）の出やすさ
+//  durationBias      : 音価ごとの重み倍率
+//  velocityRange     : ベロシティの範囲
+//  rangeShift        : 音域プロファイルへの半音シフト（Darkは少し低めに）
+const STYLE_CONFIG = {
+  Cute:       { ja: 'Cute（キュート）',       repeatProb: 0.20, leapProb: 0.15, octaveLeapProb: 0.02, restProb: 0.10, syncopationProb: 0.15, durationBias: { sixteenth: 1.4, eighth: 1.2, quarter: 0.9, half: 0.6, whole: 0.4 }, velocityRange: [85, 110], rangeShift: 0 },
+  Soft:       { ja: 'Soft（ソフト）',         repeatProb: 0.10, leapProb: 0.12, octaveLeapProb: 0.01, restProb: 0.12, syncopationProb: 0.08, durationBias: { half: 1.6, quarter: 1.3, eighth: 0.8, sixteenth: 0.4, whole: 1.1 }, velocityRange: [58, 85], rangeShift: 0 },
+  Power:      { ja: 'Power（パワー）',        repeatProb: 0.08, leapProb: 0.32, octaveLeapProb: 0.04, restProb: 0.05, syncopationProb: 0.28, durationBias: { quarter: 1.2, eighth: 1.1, sixteenth: 0.9, half: 0.9, whole: 0.6 }, velocityRange: [95, 125], rangeShift: 0 },
+  Dark:       { ja: 'Dark（ダーク）',         repeatProb: 0.15, leapProb: 0.14, octaveLeapProb: 0.015,restProb: 0.14, syncopationProb: 0.10, durationBias: { half: 1.4, quarter: 1.3, eighth: 0.9, sixteenth: 0.5, whole: 1.2 }, velocityRange: [55, 80], rangeShift: -2 },
+  Emotional:  { ja: 'Emotional（エモーショナル）', repeatProb: 0.10, leapProb: 0.25, octaveLeapProb: 0.02, restProb: 0.12, syncopationProb: 0.16, durationBias: { half: 1.5, quarter: 1.2, eighth: 0.9, sixteenth: 0.6, whole: 1.1 }, velocityRange: [68, 108], rangeShift: 0 },
+  Electronic: { ja: 'Electronic（エレクトロニック）', repeatProb: 0.30, leapProb: 0.18, octaveLeapProb: 0.02, restProb: 0.04, syncopationProb: 0.35, durationBias: { sixteenth: 1.8, eighth: 1.3, quarter: 0.7, half: 0.4, whole: 0.2 }, velocityRange: [90, 115], rangeShift: 0 },
+  Pop:        { ja: 'Pop（ポップ）',          repeatProb: 0.12, leapProb: 0.22, octaveLeapProb: 0.02, restProb: 0.08, syncopationProb: 0.18, durationBias: { sixteenth: 1, eighth: 1, quarter: 1, half: 1, whole: 1 }, velocityRange: [78, 102], rangeShift: 0 },
+  Rock:       { ja: 'Rock（ロック）',         repeatProb: 0.10, leapProb: 0.30, octaveLeapProb: 0.03, restProb: 0.06, syncopationProb: 0.22, durationBias: { eighth: 1.3, quarter: 1.2, sixteenth: 0.8, half: 0.8, whole: 0.5 }, velocityRange: [95, 120], rangeShift: 0 }
+};
+const VOCAL_STYLE_IDS = ['Cute', 'Soft', 'Power', 'Dark', 'Emotional', 'Electronic', 'Pop', 'Rock'];
+
+const BAR_LENGTHS = [2, 4, 8];
+
+
+/* ============================================================================
+ * 2. 疑似乱数（Seed固定対応）
+ * ==========================================================================*/
+
+// mulberry32: 軽量で質の良い疑似乱数生成器。同じseedから常に同じ数列を生成する。
+function mulberry32(seed) {
+  let t = seed >>> 0;
+  return function () {
+    t |= 0;
+    t = (t + 0x6D2B79F5) | 0;
+    let r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// 文字列からseed用の整数ハッシュを作る（xmur3ベース）
+function hashStringToSeed(str) {
+  str = String(str || 'miku');
+  let h = 1779033703 ^ str.length;
+  for (let i = 0; i < str.length; i++) {
+    h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+    h = (h << 13) | (h >>> 19);
+  }
+  h = Math.imul(h ^ (h >>> 16), 2246822519);
+  h = Math.imul(h ^ (h >>> 13), 3266489917);
+  h = (h ^ (h >>> 16)) >>> 0;
+  return h;
+}
+
+
+/* ============================================================================
+ * 3. メロディ生成エンジン
+ * ==========================================================================*/
+
+// 剰余（負数対応）
+function MOD(n, m) { return ((n % m) + m) % m; }
+
+// 指定キーにおけるスケール構成音のpitch class集合
+function scalePCs(keyOffset, scaleSteps) {
+  const steps = scaleSteps || SCALE_DEFS.major.steps;
+  const s = new Set();
+  steps.forEach(v => s.add(MOD(v + keyOffset, 12)));
+  return s;
+}
+// 指定キー・コードにおけるコードトーンのpitch class集合
+function chordPCs(chordName, keyOffset, scaleSteps) {
+  const steps = scaleSteps || SCALE_DEFS.major.steps;
+  const degreeIndex = nameToDegreeIndex(chordName);
+  const tones = getChordTonesForDegree(steps, degreeIndex);
+  const s = new Set();
+  tones.forEach(v => s.add(MOD(v + keyOffset, 12)));
+  return s;
+}
+
+// pitchが集合setに含まれる最も近い音に補正する（含まれていればそのまま）
+function nearestInSet(pitch, set) {
+  if (set.has(MOD(pitch, 12))) return pitch;
+  for (let d = 1; d < 12; d++) {
+    if (set.has(MOD(pitch - d, 12))) return pitch - d;
+    if (set.has(MOD(pitch + d, 12))) return pitch + d;
+  }
+  return pitch;
+}
+// pitchをスケール上の最寄りの音にスナップする
+function snapToScale(pitch, keyOffset, scaleSteps) {
+  return nearestInSet(pitch, scalePCs(keyOffset, scaleSteps));
+}
+
+// pitchから「ダイアトニックで count 度」動いた音を返す（順次進行の基本単位）。
+// count>0で上行、count<0で下行。半音単位で1つずつ動かしながらスケール上の音まで進める。
+function stepScale(pitch, count, keyOffset, scaleSteps) {
+  const set = scalePCs(keyOffset, scaleSteps);
+  let p = pitch;
+  const dir = count >= 0 ? 1 : -1;
+  const n = Math.abs(count);
+  for (let i = 0; i < n; i++) {
+    do { p += dir; } while (!set.has(MOD(p, 12)));
+  }
+  return p;
+}
+
+// 汎用の重み付きランダム選択
+function weightedChoice(pairs, rng) {
+  const total = pairs.reduce((s, p) => s + Math.max(0, p[1]), 0);
+  if (total <= 0) return pairs[0][0];
+  let r = rng() * total;
+  for (const [name, w] of pairs) {
+    const ww = Math.max(0, w);
+    if (r < ww) return name;
+    r -= ww;
+  }
+  return pairs[pairs.length - 1][0];
+}
+
+// ベロシティ決定（スタイル基準値 + 強拍/クライマックスで加算）
+function pickVelocity(styleCfg, rng, isClimax, strongBeat) {
+  const [vmin, vmax] = styleCfg.velocityRange;
+  let v = vmin + Math.floor(rng() * (vmax - vmin + 1));
+  if (isClimax) v += 12;
+  else if (strongBeat) v += 4;
+  return Math.max(1, Math.min(127, v));
+}
+
+/**
+ * モチーフ（耳に残る2〜4音のフレーズの核）を生成する。
+ * 8分音符主体・時々16分という「歌詞が乗せやすいリズム」を意識し、
+ * 半小節（240tick）以内に収まる短いセルとして作る。
+ * deltaSteps: 直前の音からのダイアトニック度数差（-2〜+2で歌いやすい範囲に制限）
+ */
+function generateMotif(rng) {
+  const len = 2 + Math.floor(rng() * 3); // 2〜4音
+  const shortDurPool = ['eighth', 'eighth', 'eighth', 'sixteenth', 'quarter'];
+  const notes = [];
+  let total = 0;
+  for (let i = 0; i < len; i++) {
+    const durName = shortDurPool[Math.floor(rng() * shortDurPool.length)];
+    const ticks = NOTE_TICKS[durName];
+    if (total + ticks > 240) break;
+    const deltaSteps = i === 0 ? 0 : (Math.floor(rng() * 5) - 2); // -2..+2
+    notes.push({ deltaSteps, ticks });
+    total += ticks;
+  }
+  if (notes.length === 0) notes.push({ deltaSteps: 0, ticks: NOTE_TICKS.eighth });
+  return notes;
+}
+
+/**
+ * モチーフを指定tick位置に配置し、notesOut配列へノートを追加する。
+ * variant: 'none'(反復=A) / 'invert'(音程を反転=A') / 'shift'(度数を少しずらす=A')
+ * 常にlow〜highの音域内にクランプしながら配置する。
+ */
+function placeMotif(motif, startPitch, chord, keyOffset, tickOffset, notesOut, styleCfg, rng, variant, low, high, scaleSteps) {
+  let cur = nearestInSet(startPitch, chordPCs(chord, keyOffset, scaleSteps));
+  while (cur < low) cur += 12;
+  while (cur > high) cur -= 12;
+  let t = tickOffset;
+  motif.forEach((m, i) => {
+    let steps = m.deltaSteps;
+    if (variant === 'invert') steps = -steps;
+    if (variant === 'shift' && i > 0) steps += (rng() < 0.5 ? 1 : -1);
+    if (i > 0) {
+      cur = stepScale(cur, steps, keyOffset, scaleSteps);
+      while (cur < low) cur += 12;
+      while (cur > high) cur -= 12;
+    }
+    const velocity = pickVelocity(styleCfg, rng, false, i === 0);
+    notesOut.push({ startTick: t, durTicks: m.ticks, pitch: cur, velocity });
+    t += m.ticks;
+  });
+  return { ticksUsed: t - tickOffset, endPitch: cur };
+}
+
+/**
+ * フレーズの構成（モチーフ展開のプラン）を決める。
+ * 'A'  = モチーフをそのまま使用（反復）
+ * 'A2' = モチーフを変形して使用（変形/A'）
+ * 'B'  = 新しい自由生成材料でコントラストを作る（対比）
+ * 2小節: A→A' もしくは A→B
+ * 4小節: 反復・変形・対比を組み合わせたパターンから選択（質問→回答的な構成も含む）
+ * 8小節: 4小節プランを2つ繋げる（後半は前半の変形として扱う）
+ */
+function buildStructure(bars, rng) {
+  if (bars === 2) {
+    return rng() < 0.5 ? ['A', 'A2'] : ['A', 'B'];
+  }
+  if (bars === 4) {
+    const patterns = [
+      ['A', 'A', 'B', 'A2'],   // 反復→対比→変形で着地（質問→回答的）
+      ['A', 'A2', 'B', 'A2'],  // 変形を挟みつつ対比
+      ['A', 'B', 'A', 'A2'],   // 対比を早めに出す
+      ['A', 'A2', 'A', 'B']    // 最後に対比で締める
+    ];
+    return patterns[Math.floor(rng() * patterns.length)];
+  }
+  // 8小節: 前半4小節 + 後半4小節（後半はAをA2寄りにして再登場させる）
+  const half1 = buildStructure(4, rng);
+  const half2 = buildStructure(4, rng).map(l => (l === 'A' ? 'A2' : l));
+  return half1.concat(half2);
+}
+
+// コード進行を小節数ぶん構築する
+function buildProgression(cfg, bars) {
+  const prog = [];
+  if (cfg.chordMode === 'fixed') {
+    const base = cfg.fixedProgression && cfg.fixedProgression.length ? cfg.fixedProgression : ['I', 'V', 'vi', 'IV'];
+    for (let i = 0; i < bars; i++) prog.push(base[i % base.length]);
+  } else {
+    const pool = (cfg.allowedChords && cfg.allowedChords.length) ? cfg.allowedChords : ['I', 'IV', 'V', 'vi'];
+    let last = null;
+    for (let i = 0; i < bars; i++) {
+      let choice = pool[Math.floor(cfg.rng() * pool.length)];
+      if (choice === last && pool.length > 1) {
+        choice = pool[Math.floor(cfg.rng() * pool.length)]; // 直前と同じなら1回だけ引き直し、和声の動きを作る
+      }
+      prog.push(choice);
+      last = choice;
+    }
+  }
+  return prog;
+}
+
+/**
+ * 1小節ぶんの音価列（休符含む）を生成する。
+ * targetTicks分をNOTE_TICKSの組み合わせで埋め、
+ * ・シンコペーション：一部の音の前に短い休符を挟み、拍からずらす
+ * ・ブレス：低確率で休符を挿入し、フレーズに呼吸を作る
+ * ・語尾の伸ばし：フレーズ最後の小節はhalf/wholeの重みを上げる
+ */
+function fillBarDurations(baseWeights, styleCfg, rng, isLastBar, targetTicks) {
+  targetTicks = targetTicks || 0;
+  const w = {};
+  DURATION_NAMES.forEach(n => {
+    let val = (baseWeights[n] !== undefined ? baseWeights[n] : 20) * ((styleCfg.durationBias && styleCfg.durationBias[n]) || 1);
+    if (isLastBar && (n === 'half' || n === 'whole')) val *= 1.8;
+    w[n] = val;
+  });
+
+  const slots = [];
+  let remaining = targetTicks;
+  let first = true;
+  let guard = 0;
+  while (remaining > 0 && guard < 200) {
+    guard++;
+    const candidates = DURATION_NAMES.filter(n => NOTE_TICKS[n] <= remaining);
+    if (candidates.length === 0) {
+      slots.push({ ticks: remaining, isRest: false });
+      remaining = 0;
+      break;
+    }
+    const name = weightedChoice(candidates.map(n => [n, w[n]]), rng);
+    let ticks = NOTE_TICKS[name];
+    let isRest = false;
+
+    // ブレス（休符）：先頭以外・低確率
+    if (!first && rng() < styleCfg.restProb * 0.25) {
+      isRest = true;
+    }
+    // シンコペーション：短い先行休符を挟んでオフビート感を出す
+    if (!isRest && rng() < styleCfg.syncopationProb && ticks > NOTE_TICKS.sixteenth && remaining - ticks >= 0) {
+      slots.push({ ticks: NOTE_TICKS.sixteenth, isRest: true });
+      remaining -= NOTE_TICKS.sixteenth;
+      ticks -= NOTE_TICKS.sixteenth;
+      if (ticks <= 0) ticks = NOTE_TICKS.sixteenth;
+    }
+    slots.push({ ticks, isRest });
+    remaining -= ticks;
+    first = false;
+  }
+  return slots;
+}
+
+// サビ等のクライマックス小節から、強拍位置の音を1〜2個だけ最高音域に差し替える
+function pickClimaxBar(bars, rng) {
+  if (bars <= 2) return bars - 1;
+  if (bars <= 4) return bars - 2;
+  return 4 + Math.floor(rng() * 2); // 8小節なら5〜6小節目付近
+}
+function pickClimaxPitch(range, keyOffset, rng, scaleSteps) {
+  const [lo, hi] = range;
+  const target = lo + Math.floor(rng() * (hi - lo + 1));
+  return snapToScale(target, keyOffset, scaleSteps);
+}
+function applyClimax(notes, profile, keyOffset, rng, climaxBarIndex, maxClimax, scaleSteps) {
+  if (!profile.climax || !notes.length || maxClimax <= 0) return;
+  const barStart = climaxBarIndex * TICKS_PER_BAR;
+  const barEnd = barStart + TICKS_PER_BAR;
+  // 強拍（1拍目・3拍目）にある音を優先的にクライマックス候補にする
+  let candidates = notes.filter(n => n.startTick >= barStart && n.startTick < barEnd && (n.startTick - barStart) % (TICKS_PER_BAR / 2) === 0);
+  if (candidates.length === 0) {
+    candidates = notes.filter(n => n.startTick >= barStart && n.startTick < barEnd).slice(0, 1);
+  }
+  let used = 0;
+  for (const note of candidates) {
+    if (used >= maxClimax) break;
+    note.pitch = pickClimaxPitch(profile.climaxRange, keyOffset, rng, scaleSteps);
+    note.velocity = Math.min(127, note.velocity + 12);
+    used++;
+  }
+}
+
+/**
+ * メロディ本体を生成するメイン関数。
+ * cfg: { bars, phraseType, style, keyOffset, chordMode, fixedProgression, allowedChords, durationWeights, rng }
+ * 戻り値: { notes:[{startTick,durTicks,pitch,velocity}], progression, structure }
+ */
+function generateMelody(cfg) {
+  const { bars, phraseType, style, keyOffset, rng } = cfg;
+  const scaleSteps = cfg.scaleSteps || SCALE_DEFS.major.steps;
+  const profile = PHRASE_RANGE[phraseType];
+  const styleCfg = STYLE_CONFIG[style];
+
+  let low = Math.max(GLOBAL_LOW, profile.low + (styleCfg.rangeShift || 0));
+  let high = Math.min(GLOBAL_HIGH, profile.high + (styleCfg.rangeShift || 0));
+  if (low >= high) { low = GLOBAL_LOW; high = GLOBAL_HIGH; }
+
+  const progression = buildProgression(cfg, bars);
+  const structure = buildStructure(bars, rng);
+  const motif = generateMotif(rng);
+
+  // 開始音：音域の中心付近をスケール・コードトーンにスナップして自然に入る
+  let current = snapToScale(Math.round((low + high) / 2), keyOffset, scaleSteps);
+  current = nearestInSet(current, chordPCs(progression[0], keyOffset, scaleSteps));
+
+  const notes = [];
+  let tick = 0;
+  let prevDir = rng() < 0.5 ? 1 : -1; // 順次進行の方向モメンタム（急な折り返しを減らし歌いやすくする）
+
+  for (let b = 0; b < bars; b++) {
+    const chord = progression[b];
+    const label = structure[b];
+    const isLastBar = (b === bars - 1);
+    let barTicksRemaining = TICKS_PER_BAR;
+
+    // --- モチーフ配置（A / A2 のときのみ。Bは自由生成に任せて対比を作る） ---
+    if (label === 'A' || label === 'A2') {
+      const variant = label === 'A2' ? (rng() < 0.5 ? 'invert' : 'shift') : 'none';
+      const res = placeMotif(motif, current, chord, keyOffset, tick, notes, styleCfg, rng, variant, low, high, scaleSteps);
+      tick += res.ticksUsed;
+      barTicksRemaining -= res.ticksUsed;
+      current = res.endPitch;
+    }
+
+    // --- 残りの拍を自由生成で埋める ---
+    const slots = fillBarDurations(cfg.durationWeights, styleCfg, rng, isLastBar, barTicksRemaining);
+    let localOffset = TICKS_PER_BAR - barTicksRemaining;
+
+    slots.forEach((slot, si) => {
+      if (slot.isRest) { tick += slot.ticks; localOffset += slot.ticks; return; }
+
+      const strongBeat = (localOffset === 0 || localOffset === TICKS_PER_BAR / 2);
+      const isPhraseFinalNote = isLastBar && si === slots.length - 1;
+      let pitch;
+
+      if (isPhraseFinalNote) {
+        // 自然な着地：最終コードのコードトーンへ
+        pitch = nearestInSet(current, chordPCs(chord, keyOffset, scaleSteps));
+      } else {
+        const r = rng();
+        if (r < styleCfg.repeatProb) {
+          // 同音連打
+          pitch = current;
+        } else if (r < styleCfg.repeatProb + styleCfg.leapProb) {
+          // コードトーンへの跳躍（3度〜5度程度、歌いやすい範囲に制限）
+          const stepsCount = (2 + Math.floor(rng() * 3)) * (rng() < 0.5 ? 1 : -1);
+          pitch = nearestInSet(stepScale(current, stepsCount, keyOffset, scaleSteps), chordPCs(chord, keyOffset, scaleSteps));
+          prevDir = stepsCount > 0 ? 1 : -1;
+        } else if (rng() < (styleCfg.octaveLeapProb || 0)) {
+          // オクターブ跳躍（低確率）
+          pitch = nearestInSet(current + (rng() < 0.5 ? 12 : -12), chordPCs(chord, keyOffset, scaleSteps));
+        } else {
+          // 基本：順次進行（1〜2度）。モメンタムを保ちつつ稀に方向転換。
+          const dir = (rng() < 0.75) ? prevDir : -prevDir;
+          const steps = (rng() < 0.25) ? 2 : 1;
+          pitch = stepScale(current, dir * steps, keyOffset, scaleSteps);
+          prevDir = dir;
+        }
+        // 強拍ではコードトーンに寄せる（適度なコードトーン使用）
+        if (strongBeat && rng() < 0.5) pitch = nearestInSet(pitch, chordPCs(chord, keyOffset, scaleSteps));
+      }
+
+      // 音域内へクランプ（オクターブ単位のシフトなのでスケール/コードトーン適合は維持される）
+      while (pitch < low) pitch += 12;
+      while (pitch > high) pitch -= 12;
+
+      current = pitch;
+      const velocity = pickVelocity(styleCfg, rng, false, strongBeat);
+      notes.push({ startTick: tick, durTicks: slot.ticks, pitch, velocity });
+      tick += slot.ticks;
+      localOffset += slot.ticks;
+    });
+  }
+
+  // --- サビ/フックのクライマックス処理：最高音を1〜2回だけ使用 ---
+  if (profile.climax) {
+    const climaxBarIndex = pickClimaxBar(bars, rng);
+    const maxClimax = phraseType === 'Hook' ? 1 : (rng() < 0.5 ? 1 : 2);
+    applyClimax(notes, profile, keyOffset, rng, climaxBarIndex, maxClimax, scaleSteps);
+  }
+
+  // --- 最終着地の再確認（クライマックス処理後にズレていないか） ---
+  if (notes.length) {
+    const last = notes[notes.length - 1];
+    const lastChord = progression[bars - 1];
+    last.pitch = nearestInSet(last.pitch, chordPCs(lastChord, keyOffset, scaleSteps));
+    while (last.pitch < low) last.pitch += 12;
+    while (last.pitch > high) last.pitch -= 12;
+  }
+
+  return { notes, progression, structure };
+}
+
+
+/* ============================================================================
+ * 4. SMF (Standard MIDI File) Format0 バイナリ書き出し
+ * ==========================================================================*/
+
+// MIDI可変長数値（Variable Length Quantity）へのエンコード
+function toVarLen(value) {
+  let buffer = value & 0x7F;
+  const out = [];
+  while ((value >>= 7) > 0) {
+    buffer <<= 8;
+    buffer |= ((value & 0x7F) | 0x80);
+  }
+  while (true) {
+    out.push(buffer & 0xFF);
+    if (buffer & 0x80) buffer >>= 8; else break;
+  }
+  return out;
+}
+
+// トラックのイベント列（メタイベント＋ノートオン/オフ）をバイト列にする
+function buildTrackBytes(notes, tempoBpm, trackName) {
+  const microPerQuarter = Math.round(60000000 / tempoBpm);
+  const events = [];
+  // priority: 同一tickでの並び順（メタ=0 → ノートオフ=1 → ノートオン=2）
+  events.push({ tick: 0, priority: 0, data: [0xFF, 0x51, 0x03, (microPerQuarter >> 16) & 0xFF, (microPerQuarter >> 8) & 0xFF, microPerQuarter & 0xFF] });
+  events.push({ tick: 0, priority: 0, data: [0xFF, 0x58, 0x04, 0x04, 0x02, 0x18, 0x08] }); // 拍子記号 4/4
+  const nameBytes = Array.from(new TextEncoder().encode(trackName)).slice(0, 127);
+  events.push({ tick: 0, priority: 0, data: [0xFF, 0x03, nameBytes.length].concat(nameBytes) }); // トラック名
+
+  notes.forEach(n => {
+    // ノート間に微小なギャップを作り、レガート過ぎない自然な発音区切りにする
+    const gap = Math.min(10, Math.max(1, Math.floor(n.durTicks * 0.08)));
+    const onTick = n.startTick;
+    let offTick = n.startTick + n.durTicks - gap;
+    if (offTick <= onTick) offTick = onTick + 1;
+    events.push({ tick: onTick, priority: 2, data: [0x90, n.pitch & 0x7F, n.velocity & 0x7F] });
+    events.push({ tick: offTick, priority: 1, data: [0x80, n.pitch & 0x7F, 0] });
+  });
+
+  events.sort((a, b) => a.tick - b.tick || a.priority - b.priority);
+
+  let lastTick = 0;
+  const bytes = [];
+  events.forEach(ev => {
+    const delta = ev.tick - lastTick;
+    bytes.push.apply(bytes, toVarLen(delta));
+    bytes.push.apply(bytes, ev.data);
+    lastTick = ev.tick;
+  });
+  // トラック終端
+  bytes.push.apply(bytes, toVarLen(0));
+  bytes.push(0xFF, 0x2F, 0x00);
+  return bytes;
+}
+
+// SMF Format0のファイル全体（ヘッダチャンク＋トラックチャンク）をUint8Arrayで返す
+function buildMidiFile(notes, tempoBpm, trackName) {
+  const trackBytes = buildTrackBytes(notes, tempoBpm, trackName);
+  const header = [
+    0x4D, 0x54, 0x68, 0x64, // "MThd"
+    0x00, 0x00, 0x00, 0x06, // ヘッダ長 = 6
+    0x00, 0x00,             // format 0
+    0x00, 0x01,             // ntrks = 1
+    0x00, PPQ & 0xFF        // division = 120 (PPQ)
+  ];
+  const len = trackBytes.length;
+  const trackHeader = [
+    0x4D, 0x54, 0x72, 0x6B, // "MTrk"
+    (len >>> 24) & 0xFF, (len >>> 16) & 0xFF, (len >>> 8) & 0xFF, len & 0xFF
+  ];
+  return new Uint8Array(header.concat(trackHeader, trackBytes));
+}
+
+
+/* ============================================================================
+ * 5. アプリ全体の状態
+ * ==========================================================================*/
+
+const state = {
+  results: [],       // 生成済みファイル群 [{name, bars, phraseType, style, notes, midiBytes, progression}]
+  currentIndex: -1,  // プレビュー中のインデックス
+  isPlaying: false,
+  playToken: 0,
+  audioCtx: null,
+  activeNodes: [],
+  playheadRAF: null,
+  tone: 'original',   // 試聴音色: 'original' / 'dark' / 'whisper'
+  noiseBuffer: null   // ウィスパー音色用のホワイトノイズバッファ（遅延生成してキャッシュ）
+};
+
+
+/* ============================================================================
+ * 6. Web Audio 試聴エンジン
+ * ==========================================================================*/
+
+function ensureAudioCtx() {
+  if (!state.audioCtx) {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    state.audioCtx = new Ctx();
+  }
+  return state.audioCtx;
+}
+
+// ウィスパー音色用：ホワイトノイズバッファを一度だけ生成してキャッシュする
+function getNoiseBuffer(ctx) {
+  if (state.noiseBuffer && state.noiseBuffer._ctx === ctx) return state.noiseBuffer;
+  const len = ctx.sampleRate * 2; // 2秒分をループ再生
+  const buffer = ctx.createBuffer(1, len, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+  buffer._ctx = ctx;
+  state.noiseBuffer = buffer;
+  return buffer;
+}
+
+function stopPlayback() {
+  state.playToken++;
+  state.activeNodes.forEach(n => {
+    try { n.stop(); } catch (e) {}
+    try { n.disconnect(); } catch (e) {}
+  });
+  state.activeNodes = [];
+  state.isPlaying = false;
+  if (state.playheadRAF) cancelAnimationFrame(state.playheadRAF);
+  state.playheadRAF = null;
+  updateTransportUI();
+  redrawCurrentRoll(null);
+}
+
+// 音色ごとのノート1つ分の音声グラフを組み立てる。
+// tone: 'original'(サイン+ビブラート) / 'dark'(ノコギリ波寄り・低め・重め) / 'whisper'(息成分多めの静かな声)
+function buildVoiceForNote(ctx, n, t0, t1, dur, tone) {
+  const freq = 440 * Math.pow(2, (n.pitch - 69) / 12);
+  const attack = Math.min(0.02, dur * 0.25);
+  const release = Math.min(0.09, dur * 0.35);
+  const nodes = [];
+
+  if (tone === 'dark') {
+    // ダーク：三角波+ノコギリ波を混ぜて倍音を厚くし、フィルタを絞って暗い音色に。ビブラートは深め・やや遅い。
+    const osc = ctx.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(freq, t0);
+    const osc2 = ctx.createOscillator();
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(freq / 2, t0); // オクターブ下を薄く重ねて厚みを出す
+
+    const vibrato = ctx.createOscillator();
+    vibrato.frequency.value = 4.6;
+    const vibratoGain = ctx.createGain();
+    vibratoGain.gain.value = 9;
+    vibrato.connect(vibratoGain);
+    vibratoGain.connect(osc.detune);
+    vibratoGain.connect(osc2.detune);
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 1500;
+    filter.Q.value = 1.2;
+
+    const oscGain = ctx.createGain();
+    oscGain.gain.value = 0.75;
+    const osc2Gain = ctx.createGain();
+    osc2Gain.gain.value = 0.35;
+
+    const gain = ctx.createGain();
+    const peak = Math.min(0.24, (n.velocity / 127) * 0.28);
+    gain.gain.setValueAtTime(0, t0);
+    gain.gain.linearRampToValueAtTime(peak, t0 + attack);
+    gain.gain.setValueAtTime(peak, Math.max(t0 + attack, t1 - release));
+    gain.gain.linearRampToValueAtTime(0, t1);
+
+    osc.connect(oscGain); oscGain.connect(filter);
+    osc2.connect(osc2Gain); osc2Gain.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(t0); osc.stop(t1 + 0.05);
+    osc2.start(t0); osc2.stop(t1 + 0.05);
+    vibrato.start(t0); vibrato.stop(t1 + 0.05);
+    nodes.push(osc, osc2, vibrato);
+
+  } else if (tone === 'whisper') {
+    // ウィスパー：サイン波の音量を大きく絞り、帯域を絞ったノイズ（息成分）を重ねて「囁き」感を出す。ビブラートなし。
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, t0);
+
+    const toneFilter = ctx.createBiquadFilter();
+    toneFilter.type = 'lowpass';
+    toneFilter.frequency.value = 2200;
+
+    const toneGain = ctx.createGain();
+    toneGain.gain.value = 0.12; // 声の芯はごく薄く
+
+    const noiseSrc = ctx.createBufferSource();
+    noiseSrc.buffer = getNoiseBuffer(ctx);
+    noiseSrc.loop = true;
+
+    const noiseFilter = ctx.createBiquadFilter();
+    noiseFilter.type = 'bandpass';
+    noiseFilter.frequency.setValueAtTime(freq * 2, t0); // ピッチに追従させ、息のニュアンスを持たせる
+    noiseFilter.Q.value = 0.7;
+
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.value = 0.5; // 息成分を主役に
+
+    const gain = ctx.createGain();
+    const peak = Math.min(0.20, (n.velocity / 127) * 0.22);
+    const softAttack = Math.min(0.05, dur * 0.35);
+    const softRelease = Math.min(0.12, dur * 0.4);
+    gain.gain.setValueAtTime(0, t0);
+    gain.gain.linearRampToValueAtTime(peak, t0 + softAttack);
+    gain.gain.setValueAtTime(peak, Math.max(t0 + softAttack, t1 - softRelease));
+    gain.gain.linearRampToValueAtTime(0, t1);
+
+    osc.connect(toneFilter); toneFilter.connect(toneGain); toneGain.connect(gain);
+    noiseSrc.connect(noiseFilter); noiseFilter.connect(noiseGain); noiseGain.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(t0); osc.stop(t1 + 0.05);
+    noiseSrc.start(t0); noiseSrc.stop(t1 + 0.05);
+    nodes.push(osc, noiseSrc);
+
+  } else {
+    // オリジナル：サイン波 + 軽いビブラート + ローパスフィルタ
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, t0);
+
+    const vibrato = ctx.createOscillator();
+    vibrato.frequency.value = 5.4;
+    const vibratoGain = ctx.createGain();
+    vibratoGain.gain.value = 6;
+    vibrato.connect(vibratoGain);
+    vibratoGain.connect(osc.detune);
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 3400;
+
+    const gain = ctx.createGain();
+    const peak = Math.min(0.28, (n.velocity / 127) * 0.32);
+    gain.gain.setValueAtTime(0, t0);
+    gain.gain.linearRampToValueAtTime(peak, t0 + attack);
+    gain.gain.setValueAtTime(peak, Math.max(t0 + attack, t1 - release));
+    gain.gain.linearRampToValueAtTime(0, t1);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(t0); osc.stop(t1 + 0.05);
+    vibrato.start(t0); vibrato.stop(t1 + 0.05);
+    nodes.push(osc, vibrato);
+  }
+
+  return nodes;
+}
+
+// コード伴奏用：柔らかいパッド音（トライアングル波+ローパス、ビブラートなし、控えめな音量）
+function buildPadVoiceForNote(ctx, n, t0, t1, dur) {
+  const freq = 440 * Math.pow(2, (n.pitch - 69) / 12);
+  const osc = ctx.createOscillator();
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(freq, t0);
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.value = 1800;
+
+  const gain = ctx.createGain();
+  const peak = Math.min(0.09, (n.velocity / 127) * 0.11);
+  const attack = Math.min(0.08, dur * 0.2);
+  const release = Math.min(0.15, dur * 0.3);
+  gain.gain.setValueAtTime(0, t0);
+  gain.gain.linearRampToValueAtTime(peak, t0 + attack);
+  gain.gain.setValueAtTime(peak, Math.max(t0 + attack, t1 - release));
+  gain.gain.linearRampToValueAtTime(0, t1);
+
+  osc.connect(filter);
+  filter.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.start(t0); osc.stop(t1 + 0.05);
+  return [osc];
+}
+
+// エントリのコード進行から、小節ごとに持続するコードトーン群（伴奏ノート）を組み立てる
+function buildChordNotesForEntry(entry) {
+  if (!entry || !entry.progression) return [];
+  const scaleSteps = (SCALE_DEFS[entry.scaleId] || SCALE_DEFS.major).steps;
+  const keyOffset = entry.keyOffset || 0;
+  const chordNotes = [];
+  entry.progression.forEach((chordName, barIdx) => {
+    const degreeIndex = nameToDegreeIndex(chordName);
+    const tones = getChordTonesForDegree(scaleSteps, degreeIndex);
+    const startTick = barIdx * TICKS_PER_BAR;
+    tones.forEach(t => {
+      let pitch = MOD(t + keyOffset, 12) + 48; // C3付近のオクターブ帯に配置
+      while (pitch < 48) pitch += 12;
+      while (pitch > 59) pitch -= 12;
+      chordNotes.push({ startTick, durTicks: Math.max(1, TICKS_PER_BAR - 4), pitch, velocity: 55 });
+    });
+  });
+  return chordNotes;
+}
+
+function playNotes(entry) {
+  stopPlayback();
+  if (!entry || !entry.notes || !entry.notes.length) return;
+  const notes = entry.notes;
+  const ctx = ensureAudioCtx();
+  if (ctx.state === 'suspended') ctx.resume();
+  const myToken = ++state.playToken;
+  const tempo = entry.tempo || 120;
+  const secPerTick = 60 / (tempo * PPQ);
+  const startTime = ctx.currentTime + 0.08;
+  const tone = state.tone;
+  let maxEnd = 0;
+
+  notes.forEach(n => {
+    const t0 = startTime + n.startTick * secPerTick;
+    const dur = Math.max(0.03, n.durTicks * secPerTick);
+    const t1 = t0 + dur;
+    maxEnd = Math.max(maxEnd, t1);
+
+    const voiceNodes = buildVoiceForNote(ctx, n, t0, t1, dur, tone);
+    voiceNodes.forEach(node => state.activeNodes.push(node));
+  });
+
+  const chordToggle = document.getElementById('chord-playback-toggle');
+  if (chordToggle && chordToggle.checked) {
+    const chordNotes = buildChordNotesForEntry(entry);
+    chordNotes.forEach(n => {
+      const t0 = startTime + n.startTick * secPerTick;
+      const dur = Math.max(0.05, n.durTicks * secPerTick);
+      const t1 = t0 + dur;
+      maxEnd = Math.max(maxEnd, t1);
+      const padNodes = buildPadVoiceForNote(ctx, n, t0, t1, dur);
+      padNodes.forEach(node => state.activeNodes.push(node));
+    });
+  }
+
+  state.isPlaying = true;
+  updateTransportUI();
+
+  const totalTicks = notes.length ? Math.max.apply(null, notes.map(n => n.startTick + n.durTicks)) : 0;
+  const loop = () => {
+    if (myToken !== state.playToken) return;
+    const now = ctx.currentTime;
+    const elapsedTicks = Math.max(0, (now - startTime) / secPerTick);
+    redrawCurrentRoll(elapsedTicks);
+    if (now < maxEnd + 0.1) {
+      state.playheadRAF = requestAnimationFrame(loop);
+    } else {
+      stopPlayback();
+    }
+  };
+  state.playheadRAF = requestAnimationFrame(loop);
+}
+
+
+/* ============================================================================
+ * 7. ピアノロール描画（Canvas）
+ * ==========================================================================*/
+
+function getCSSVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function drawPianoRoll(canvas, notes, totalTicks, elapsedTicks) {
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth || 600;
+  const h = canvas.clientHeight || 220;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+
+  ctx.fillStyle = getCSSVar('--panel-alt') || '#171C28';
+  ctx.fillRect(0, 0, w, h);
+
+  if (!notes || !notes.length) return;
+
+  const pitches = notes.map(n => n.pitch);
+  const minP = Math.min.apply(null, pitches) - 2;
+  const maxP = Math.max.apply(null, pitches) + 2;
+  const span = Math.max(1, maxP - minP);
+  const pxPerTick = w / Math.max(1, totalTicks);
+  const pxPerSemi = h / span;
+
+  // グリッド：拍線（薄）と小節線（濃）
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for (let t = 0; t <= totalTicks; t += NOTE_TICKS.quarter) {
+    const x = Math.round(t * pxPerTick) + 0.5;
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+  }
+  ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+  for (let t = 0; t <= totalTicks; t += TICKS_PER_BAR) {
+    const x = Math.round(t * pxPerTick) + 0.5;
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+  }
+
+  // ノート
+  const accent = getCSSVar('--accent') || '#39C5BB';
+  const accent2 = getCSSVar('--accent2') || '#FF6F91';
+  notes.forEach(n => {
+    const x = n.startTick * pxPerTick;
+    const wpx = Math.max(2, n.durTicks * pxPerTick - 1);
+    const y = h - (n.pitch - minP + 1) * pxPerSemi;
+    const hpx = Math.max(3, pxPerSemi - 1.5);
+    ctx.fillStyle = n.velocity >= 118 ? accent2 : accent; // 高ベロシティ(クライマックス周辺)を強調
+    roundRect(ctx, x, y, wpx, hpx, Math.min(2, hpx / 2));
+    ctx.fill();
+  });
+
+  // 再生位置ライン
+  if (elapsedTicks !== null && elapsedTicks !== undefined) {
+    const x = elapsedTicks * pxPerTick;
+    ctx.strokeStyle = accent2;
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+  }
+}
+
+function redrawCurrentRoll(elapsedTicks) {
+  const entry = state.results[state.currentIndex];
+  const canvas = document.getElementById('piano-roll');
+  if (!entry) { drawPianoRoll(canvas, [], 1, null); return; }
+  const totalTicks = entry.bars * TICKS_PER_BAR;
+  drawPianoRoll(canvas, entry.notes, totalTicks, elapsedTicks);
+}
+
+
+/* ============================================================================
+ * 8. UI 構築・イベント配線
+ * ==========================================================================*/
+
+// --- チップ（チェックボックス）群を動的に構築するヘルパー ---
+function buildChipGroup(containerId, items, groupName, defaultChecked) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  items.forEach((item, i) => {
+    const id = groupName + '-' + item.id;
+    const wrap = document.createElement('div');
+    wrap.className = 'chip';
+    wrap.innerHTML =
+      '<input type="checkbox" id="' + id + '" data-group="' + groupName + '" value="' + item.id + '"' + (defaultChecked ? ' checked' : '') + '>' +
+      '<label for="' + id + '">' + item.label + '</label>';
+    container.appendChild(wrap);
+  });
+}
+
+function getCheckedValues(groupName) {
+  const nodes = document.querySelectorAll('input[data-group="' + groupName + '"]:checked');
+  return Array.from(nodes).map(n => n.value);
+}
+
+// --- 初期UI構築 ---
+function initUI() {
+  // ① 小節数
+  buildChipGroup('group-bar', BAR_LENGTHS.map(b => ({ id: String(b), label: b + '小節' })), 'bar', true);
+  // ② フレーズタイプ
+  buildChipGroup('group-phrase', PHRASE_TYPE_IDS.map(id => ({ id, label: PHRASE_RANGE[id].ja })), 'phrase', true);
+  // ③ 歌唱スタイル
+  buildChipGroup('group-style', VOCAL_STYLE_IDS.map(id => ({ id, label: STYLE_CONFIG[id].ja })), 'style', true);
+  // ④ キー選択
+  const keySel = document.getElementById('key-select');
+  keySel.innerHTML = KEY_NAMES.map((name, i) => '<option value="' + i + '">' + name + (i === 0 ? '（デフォルト）' : '') + '</option>').join('');
+
+  // ④ スケール選択
+  const scaleSel = document.getElementById('scale-select');
+  scaleSel.innerHTML = SCALE_IDS.map(id => '<option value="' + id + '"' + (id === 'major' ? ' selected' : '') + '>' + SCALE_DEFS[id].ja + '</option>').join('');
+
+  // ⑤ コード（ランダムモード用チップ、および固定コードプリセット）は選択中のスケールの度数に応じて動的に構築する。
+  // 7音スケール（メジャー/マイナー等）はローマ数字（I, ii, iii...）、5音・6音・8音スケールは数値（1, 2, 3...）で度数を表す。
+  function refreshChordOptionsForScale() {
+    const scaleId = scaleSel.value;
+    const degreeNames = getScaleDegreeNames(scaleId);
+    buildChipGroup('group-chord', degreeNames.map(id => ({ id, label: id })), 'chord', true);
+
+    const presets = getChordPresetsForScale(scaleId);
+    const presetSel = document.getElementById('chord-preset');
+    presetSel.innerHTML = Object.keys(presets).map(k => '<option value="' + k + '">' + k + '</option>').join('');
+  }
+  scaleSel.addEventListener('change', refreshChordOptionsForScale);
+  refreshChordOptionsForScale();
+
+  // コードモード切り替え
+  document.querySelectorAll('input[name="chord-mode"]').forEach(r => {
+    r.addEventListener('change', () => {
+      const mode = document.querySelector('input[name="chord-mode"]:checked').value;
+      document.getElementById('chord-random-block').style.display = (mode === 'random') ? '' : 'none';
+      document.getElementById('chord-fixed-block').style.display = (mode === 'fixed') ? '' : 'none';
+    });
+  });
+
+  // ⑥ 音価バランス スライダー
+  const durDefaults = [
+    { key: 'whole', label: 'Whole', val: 5 },
+    { key: 'half', label: 'Half', val: 10 },
+    { key: 'quarter', label: 'Quarter', val: 25 },
+    { key: 'eighth', label: 'Eighth', val: 45 },
+    { key: 'sixteenth', label: 'Sixteenth', val: 15 }
+  ];
+  const durContainer = document.getElementById('duration-sliders');
+  durContainer.innerHTML = durDefaults.map(d =>
+    '<div class="slider-row">' +
+      '<span class="label">' + d.label + '</span>' +
+      '<input type="range" min="0" max="100" value="' + d.val + '" id="dur-' + d.key + '">' +
+      '<span class="val" id="dur-' + d.key + '-val">' + d.val + '</span>' +
+    '</div>'
+  ).join('');
+  durDefaults.forEach(d => {
+    const slider = document.getElementById('dur-' + d.key);
+    const valLabel = document.getElementById('dur-' + d.key + '-val');
+    slider.addEventListener('input', () => { valLabel.textContent = slider.value; });
+  });
+
+  // ⑧ テンポスライダー
+  const tempoSlider = document.getElementById('tempo-slider');
+  const tempoVal = document.getElementById('tempo-slider-val');
+  tempoSlider.addEventListener('input', () => { tempoVal.textContent = tempoSlider.value; });
+
+  // 生成数ラジオのlabel for属性は既にHTML側で対応済み
+
+  // トランスポート
+  document.getElementById('btn-play').addEventListener('click', () => {
+    const entry = state.results[state.currentIndex];
+    if (entry) playNotes(entry);
+  });
+  document.getElementById('btn-stop').addEventListener('click', stopPlayback);
+
+  // コード再生トグル：再生中に切り替えた場合は同じフレーズを再生し直す
+  document.getElementById('chord-playback-toggle').addEventListener('change', () => {
+    const entry = state.results[state.currentIndex];
+    if (state.isPlaying && entry) playNotes(entry);
+  });
+
+  // 音色セレクタ
+  const toneSelect = document.getElementById('tone-select');
+  toneSelect.value = state.tone;
+  toneSelect.addEventListener('change', () => {
+    state.tone = toneSelect.value;
+    // 再生中に音色を変更した場合は、同じフレーズを新しい音色で再生し直す
+    const entry = state.results[state.currentIndex];
+    if (state.isPlaying && entry) playNotes(entry);
+  });
+
+  // Aboutモーダル
+  const aboutModal = document.getElementById('about-modal');
+  document.getElementById('btn-about').addEventListener('click', () => { aboutModal.hidden = false; });
+  document.getElementById('btn-about-close').addEventListener('click', () => { aboutModal.hidden = true; });
+  aboutModal.addEventListener('click', (e) => { if (e.target === aboutModal) aboutModal.hidden = true; });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !aboutModal.hidden) aboutModal.hidden = true; });
+
+  document.getElementById('btn-generate').addEventListener('click', onGenerateClick);
+  document.getElementById('btn-zip').addEventListener('click', onDownloadZip);
+  document.getElementById('btn-clear').addEventListener('click', onClearResults);
+
+  // ★ PHRASE_ARCHITECT連携: ポップアップとして開かれた場合のみ「→PA」を表示
+  if (window.opener) {
+    document.getElementById('pa-send-wrap').style.display = '';
+    document.getElementById('btn-send-pa').style.display = '';
+  }
+  document.getElementById('btn-send-pa').addEventListener('click', () => {
+    const entry = state.results[state.currentIndex];
+    sendToPhraseArchitect(entry);
+  });
+
+  redrawCurrentRoll(null);
+}
+
+/* ============================================================================
+ * 12. PHRASE_ARCHITECT連携（postMessageでGlobal Motifへ送信）
+ * ==========================================================================*/
+function sendToPhraseArchitect(entry) {
+  if (!window.opener) {
+    alert('この機能はPHRASE_ARCHITECTのポップアップとして開いた場合のみ使用できます。');
+    return;
+  }
+  if (!entry || !entry.notes || !entry.notes.length) {
+    alert('送信するフレーズがありません。先に生成・選択してください。');
+    return;
+  }
+  const targetSlot = document.getElementById('pa-target-slot').value; // 'A' or 'Ap'
+  window.opener.postMessage({
+    type: 'PHRASE_ARCHITECT_MOTIF',
+    ppq: PPQ,
+    targetSlot: targetSlot,
+    notes: entry.notes.map(n => ({ pitch: n.pitch, startTick: n.startTick, durTicks: n.durTicks }))
+  }, '*');
+  const statusEl = document.getElementById('status-text');
+  statusEl.textContent = 'PHRASE_ARCHITECT の Global ' + (targetSlot === 'Ap' ? "A'" : 'A') + ' へ送信しました（' + entry.notes.length + '音）';
+}
+
+function updateTransportUI() {
+  const playBtn = document.getElementById('btn-play');
+  const stopBtn = document.getElementById('btn-stop');
+  const hasEntry = state.currentIndex >= 0;
+  playBtn.disabled = !hasEntry;
+  stopBtn.disabled = !state.isPlaying;
+  playBtn.classList.toggle('play-active', state.isPlaying);
+}
+
+
+/* ============================================================================
+ * 9. 設定収集・バッチ生成・ファイル命名
+ * ==========================================================================*/
+
+function collectSettings() {
+  const bars = getCheckedValues('bar').map(Number);
+  const phraseTypes = getCheckedValues('phrase');
+  const styles = getCheckedValues('style');
+  const keyOffset = parseInt(document.getElementById('key-select').value, 10);
+  const scaleId = document.getElementById('scale-select').value;
+  const chordMode = document.querySelector('input[name="chord-mode"]:checked').value;
+  const fixedProgression = getChordPresetsForScale(scaleId)[document.getElementById('chord-preset').value];
+  const allowedChords = getCheckedValues('chord');
+  const durationWeights = {
+    whole: Number(document.getElementById('dur-whole').value),
+    half: Number(document.getElementById('dur-half').value),
+    quarter: Number(document.getElementById('dur-quarter').value),
+    eighth: Number(document.getElementById('dur-eighth').value),
+    sixteenth: Number(document.getElementById('dur-sixteenth').value)
+  };
+  const seedFixed = document.getElementById('seed-fixed').checked;
+  const seedValue = document.getElementById('seed-input').value;
+  const count = parseInt(document.querySelector('input[name="batch-count"]:checked').value, 10);
+  const tempo = parseInt(document.getElementById('tempo-slider').value, 10);
+
+  return { bars, phraseTypes, styles, keyOffset, scaleId, chordMode, fixedProgression, allowedChords, durationWeights, seedFixed, seedValue, count, tempo };
+}
+
+// ファイル名例: Verse_Cute_001.mid / Chorus_Power_245.mid
+function buildFileName(phraseType, style, index, total) {
+  const pad = Math.max(3, String(total).length);
+  return phraseType + '_' + style + '_' + String(index).padStart(pad, '0') + '.mid';
+}
+
+function generatePhraseFile(params) {
+  const rng = mulberry32(params.seed);
+  const scaleSteps = (SCALE_DEFS[params.scaleId] || SCALE_DEFS.major).steps;
+  const cfg = Object.assign({}, params, { rng, scaleSteps });
+  const { notes, progression, structure } = generateMelody(cfg);
+  const trackName = params.phraseType + '_' + params.style;
+  const midiBytes = buildMidiFile(notes, params.tempo || 120, trackName);
+  return { notes, progression, structure, midiBytes };
+}
+
+function onGenerateClick() {
+  const s = collectSettings();
+  if (!s.bars.length || !s.phraseTypes.length || !s.styles.length) {
+    alert('小節数・フレーズタイプ・歌唱スタイルをそれぞれ1つ以上選択してください。');
+    return;
+  }
+  if (s.chordMode === 'random' && !s.allowedChords.length) {
+    alert('ランダム生成モードでは、使用するコードを1つ以上選択してください。');
+    return;
+  }
+
+  const baseSeed = s.seedFixed ? hashStringToSeed(s.seedValue) : (Math.floor(Math.random() * 2147483647));
+
+  state.results = [];
+  state.currentIndex = -1;
+  stopPlayback();
+  renderResultsList();
+
+  const genBtn = document.getElementById('btn-generate');
+  genBtn.disabled = true;
+  const statusEl = document.getElementById('status-text');
+
+  let i = 0;
+  const total = s.count;
+
+  function step() {
+    const chunkEnd = Math.min(i + 10, total);
+    for (; i < chunkEnd; i++) {
+      // カテゴリ選択用の乱数（seed固定時はバッチ全体が再現可能になる）
+      const catRng = mulberry32((baseSeed * 2654435761 + i * 40503) >>> 0);
+      const bars = s.bars[Math.floor(catRng() * s.bars.length)];
+      const phraseType = s.phraseTypes[Math.floor(catRng() * s.phraseTypes.length)];
+      const style = s.styles[Math.floor(catRng() * s.styles.length)];
+      const melodySeed = (baseSeed + i * 97 + 13) >>> 0;
+
+      const result = generatePhraseFile({
+        bars, phraseType, style,
+        keyOffset: s.keyOffset,
+        scaleId: s.scaleId,
+        chordMode: s.chordMode,
+        fixedProgression: s.fixedProgression,
+        allowedChords: s.allowedChords,
+        durationWeights: s.durationWeights,
+        seed: melodySeed,
+        tempo: s.tempo
+      });
+
+      const fileName = buildFileName(phraseType, style, i + 1, total);
+      state.results.push({
+        name: fileName, bars, phraseType, style,
+        notes: result.notes, midiBytes: result.midiBytes, progression: result.progression,
+        keyOffset: s.keyOffset, scaleId: s.scaleId, tempo: s.tempo
+      });
+    }
+    statusEl.textContent = i + ' / ' + total + ' 曲 生成中…';
+    if (i < total) {
+      setTimeout(step, 0);
+    } else {
+      genBtn.disabled = false;
+      statusEl.textContent = total + '曲 生成完了';
+      state.currentIndex = 0;
+      renderResultsList();
+      selectResult(0);
+    }
+  }
+  step();
+}
+
+
+/* ============================================================================
+ * 10. 結果リスト・ダウンロード
+ * ==========================================================================*/
+
+function triggerDownload(blobOrBytes, filename, mime) {
+  const blob = (blobOrBytes instanceof Blob) ? blobOrBytes : new Blob([blobOrBytes], { type: mime || 'audio/midi' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+function pad2(n) { return String(n).padStart(2, '0'); }
+
+function renderResultsList() {
+  const listEl = document.getElementById('results-list');
+  const countEl = document.getElementById('results-count');
+  countEl.textContent = state.results.length ? '(' + state.results.length + '件)' : '';
+  document.getElementById('btn-zip').style.display = state.results.length > 1 ? '' : 'none';
+
+  if (!state.results.length) {
+    listEl.innerHTML = '<div class="empty-note" style="padding:16px;">まだ生成されていません。</div>';
+    return;
+  }
+  listEl.innerHTML = '';
+  state.results.forEach((r, idx) => {
+    const row = document.createElement('div');
+    row.className = 'result-row' + (idx === state.currentIndex ? ' active' : '');
+    row.innerHTML =
+      '<span class="fname">' + r.name + '</span>' +
+      '<span class="fmeta">' + r.bars + '小節</span>' +
+      '<button data-act="play" data-idx="' + idx + '">再生</button>' +
+      '<button data-act="dl" data-idx="' + idx + '">DL</button>' +
+      (window.opener ? '<button data-act="pa" data-idx="' + idx + '">→PA</button>' : '');
+    listEl.appendChild(row);
+  });
+
+  listEl.querySelectorAll('button[data-act="play"]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const idx = Number(e.currentTarget.getAttribute('data-idx'));
+      selectResult(idx);
+      playNotes(state.results[idx]);
+    });
+  });
+  listEl.querySelectorAll('button[data-act="dl"]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const idx = Number(e.currentTarget.getAttribute('data-idx'));
+      const r = state.results[idx];
+      triggerDownload(r.midiBytes, r.name);
+    });
+  });
+  listEl.querySelectorAll('button[data-act="pa"]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const idx = Number(e.currentTarget.getAttribute('data-idx'));
+      selectResult(idx);
+      sendToPhraseArchitect(state.results[idx]);
+    });
+  });
+}
+
+function selectResult(idx) {
+  state.currentIndex = idx;
+  const entry = state.results[idx];
+  if (!entry) return;
+
+  document.getElementById('empty-note').style.display = 'none';
+  document.getElementById('preview-title').textContent = entry.name;
+
+  const tagsEl = document.getElementById('preview-tags');
+  const progText = entry.progression.join(' - ');
+  const keyName = KEY_NAMES[entry.keyOffset || 0];
+  const scaleJa = (SCALE_DEFS[entry.scaleId] || SCALE_DEFS.major).ja;
+  tagsEl.innerHTML =
+    '<span class="tag accent">' + PHRASE_RANGE[entry.phraseType].ja + '</span>' +
+    '<span class="tag accent2">' + STYLE_CONFIG[entry.style].ja + '</span>' +
+    '<span class="tag">' + entry.bars + '小節</span>' +
+    '<span class="tag">' + keyName + ' ' + scaleJa + '</span>' +
+    '<span class="tag">Chord: ' + progText + '</span>' +
+    '<span class="tag">Tempo: ' + (entry.tempo || 120) + '</span>' +
+    '<span class="tag">Notes: ' + entry.notes.length + '</span>';
+
+  redrawCurrentRoll(null);
+  updateTransportUI();
+  renderResultsList();
+}
+
+function onDownloadZip() {
+  if (!state.results.length) return;
+  if (typeof JSZip === 'undefined') {
+    alert('ZIPライブラリの読み込みに失敗しました。ネットワーク接続をご確認のうえページを再読み込みしてください。');
+    return;
+  }
+  const zip = new JSZip();
+  state.results.forEach(r => zip.file(r.name, r.midiBytes));
+  const statusEl = document.getElementById('status-text');
+  statusEl.textContent = 'ZIP圧縮中…';
+  zip.generateAsync({ type: 'blob' }).then(blob => {
+    const d = new Date();
+    const stamp = d.getFullYear() + pad2(d.getMonth() + 1) + pad2(d.getDate()) + '_' + pad2(d.getHours()) + pad2(d.getMinutes());
+    triggerDownload(blob, 'MikuMidiPack_' + stamp + '.zip', 'application/zip');
+    statusEl.textContent = 'ZIPダウンロード完了';
+  }).catch(err => {
+    console.error(err);
+    statusEl.textContent = 'ZIP生成エラー';
+  });
+}
+
+function onClearResults() {
+  stopPlayback();
+  state.results = [];
+  state.currentIndex = -1;
+  document.getElementById('preview-title').textContent = 'プレビュー待機中';
+  document.getElementById('preview-tags').innerHTML = '';
+  document.getElementById('empty-note').style.display = '';
+  document.getElementById('status-text').textContent = '';
+  redrawCurrentRoll(null);
+  renderResultsList();
+  updateTransportUI();
+}
+
+/* ============================================================================
+ * 11. 起動
+ * ==========================================================================*/
+window.addEventListener('DOMContentLoaded', initUI);
+window.addEventListener('resize', () => redrawCurrentRoll(null));
+
+</script>
+</body>
+</html>

@@ -1,0 +1,684 @@
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap');
+:root{--bg:#0a0a0f;--bg2:#12121a;--bg3:#1a1a26;--ac:#e8ff47;--ac2:#47ffe8;--ac3:#ff4787;--ac4:#a78bfa;--ac5:#ffb347;--tx:#e8e8f0;--mt:#5a5a7a;--bd:#2a2a3e;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--tx);font-family:sans-serif;min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--bd)1px,transparent 1px),linear-gradient(90deg,var(--bd)1px,transparent 1px);background-size:40px 40px;opacity:.17;pointer-events:none;z-index:0;}
+.w{position:relative;z-index:1;max-width:920px;margin:0 auto;padding:20px 14px 60px;}
+.modal-ov{position:fixed;inset:0;background:#000c;display:none;align-items:center;justify-content:center;z-index:999;}
+.modal-ov.vis{display:flex;}
+.modal-box{background:var(--bg2);border:1px solid var(--ac2);border-radius:6px;padding:34px 44px;text-align:center;}
+.modal-logo{font-family:'Bebas Neue',sans-serif;font-size:44px;color:var(--ac);letter-spacing:2px;line-height:1.1;}
+.modal-logo span{color:var(--ac2);}
+.modal-x{color:var(--ac3);}
+.modal-sub{font-family:'Space Mono',monospace;font-size:9px;color:var(--mt);letter-spacing:3px;margin:10px 0 4px;}
+.modal-author{font-family:'Space Mono',monospace;font-size:9px;color:var(--ac2);letter-spacing:2px;}
+.modal-close{margin-top:18px;background:var(--ac2);border:none;color:var(--bg);padding:7px 20px;font-family:'Space Mono',monospace;font-size:8px;font-weight:700;cursor:pointer;border-radius:2px;letter-spacing:2px;}
+.hdr{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:4px;}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:50px;line-height:.9;color:var(--ac);}
+.logo span{color:var(--ac2);}
+.abt{background:transparent;border:1px solid var(--mt);color:var(--mt);padding:4px 10px;font-family:'Space Mono',monospace;font-size:8px;cursor:pointer;border-radius:2px;transition:all .15s;letter-spacing:1px;}
+.abt:hover{border-color:var(--ac2);color:var(--ac2);}
+.ver{font-size:8px;color:var(--mt);letter-spacing:3px;font-family:'Space Mono',monospace;margin-bottom:16px;border-bottom:1px solid var(--bd);padding-bottom:12px;}
+.step{background:var(--bg2);border:1px solid var(--bd);border-radius:5px;margin-bottom:8px;overflow:hidden;}
+.step-header{display:flex;align-items:center;gap:10px;padding:13px 15px;cursor:pointer;transition:background .15s;user-select:none;}
+.step-header:hover{background:var(--bg3);}
+.step-num{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--ac);line-height:1;min-width:32px;}
+.step-title{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--ac);text-transform:uppercase;}
+.step-sub{font-family:'Space Mono',monospace;font-size:8px;color:var(--mt);letter-spacing:1px;margin-top:2px;}
+.step-arrow{margin-left:auto;font-size:16px;color:var(--mt);transition:transform .2s;}
+.step.open .step-arrow{transform:rotate(180deg);}
+.step-body{display:none;padding:0 15px 15px;}
+.step.open .step-body{display:block;}
+.lbl{display:block;font-size:8px;letter-spacing:2px;color:var(--mt);text-transform:uppercase;font-family:'Space Mono',monospace;margin-bottom:5px;}
+select{background:var(--bg3);border:1px solid var(--bd);color:var(--tx);padding:6px 8px;border-radius:2px;font-family:'Space Mono',monospace;font-size:10px;outline:none;cursor:pointer;appearance:none;}
+select option{background:var(--bg2);}
+input[type=range]{height:4px;border:none;background:var(--bg3);border-radius:2px;cursor:pointer;display:block;}
+.sr{display:flex;align-items:center;gap:8px;}
+.sv{font-family:'Space Mono',monospace;font-size:13px;font-weight:700;color:var(--ac);min-width:32px;text-align:right;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;}
+.mb{background:var(--bg3);border:1px solid var(--bd);color:var(--mt);padding:7px 4px;font-family:'Space Mono',monospace;font-size:8px;letter-spacing:1px;cursor:pointer;border-radius:2px;text-align:center;transition:all .15s;line-height:1.4;}
+.mb:hover{border-color:var(--ac2);color:var(--ac2);}
+.mb.on{background:var(--ac);border-color:var(--ac);color:var(--bg);font-weight:700;}
+.cb{background:var(--bg3);border:1px solid var(--bd);color:var(--mt);padding:7px 9px;font-family:'Space Mono',monospace;font-size:8px;cursor:pointer;border-radius:2px;display:flex;align-items:center;gap:5px;transition:all .15s;}
+.cb .dot{width:6px;height:6px;border-radius:50%;border:1px solid var(--mt);flex-shrink:0;transition:all .15s;}
+.cb.on{border-color:var(--ac2);color:var(--ac2);}
+.cb.on .dot{background:var(--ac2);border-color:var(--ac2);}
+.pb{background:var(--bg3);border:1px solid var(--bd);color:var(--mt);padding:4px 9px;font-family:'Space Mono',monospace;font-size:8px;cursor:pointer;border-radius:2px;transition:all .15s;white-space:nowrap;}
+.pb:hover{border-color:var(--ac);color:var(--ac);}
+.pbr{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;}
+.mood-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:10px;}
+.mood-btn{background:var(--bg3);border:1px solid var(--bd);color:var(--mt);padding:8px 4px;font-family:'Space Mono',monospace;font-size:8px;cursor:pointer;border-radius:2px;text-align:center;transition:all .15s;line-height:1.5;}
+.mood-btn .mn{font-size:9px;font-weight:700;display:block;}
+.mood-btn .ms{font-size:6px;opacity:.6;display:block;margin-top:1px;}
+.mood-btn.on{border-color:var(--ac);background:var(--ac)15;color:var(--ac);}
+.mood-btn.on .ms{opacity:1;color:var(--ac2);}
+.mood-params{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px;}
+.mp-row{background:var(--bg2);border:1px solid var(--bd);border-radius:3px;padding:8px;}
+.mp-label{font-family:'Space Mono',monospace;font-size:8px;color:var(--mt);letter-spacing:1px;margin-bottom:4px;display:flex;justify-content:space-between;}
+.mp-label span{color:var(--ac4);font-weight:700;}
+.mp-hint{font-family:'Space Mono',monospace;font-size:6px;color:var(--mt);margin-top:3px;opacity:.7;}
+.mm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:7px;margin-top:10px;}
+.mm-row{background:var(--bg2);border:1px solid var(--bd);border-radius:3px;padding:7px;}
+.mm-part{font-family:'Space Mono',monospace;font-size:7px;letter-spacing:2px;display:flex;align-items:center;gap:5px;margin-bottom:5px;}
+.mm-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.mm-tri{display:flex;gap:3px;margin-top:4px;}
+.mm-tri button{flex:1;background:var(--bg3);border:1px solid var(--bd);color:var(--mt);font-family:'Space Mono',monospace;font-size:7px;padding:4px 2px;border-radius:2px;cursor:pointer;transition:all .12s;line-height:1.3;}
+.mm-tri button:hover{border-color:var(--ac4);color:var(--ac4);}
+.mm-tri button.on{background:var(--ac4)18;border-color:var(--ac4);color:var(--ac4);font-weight:700;}
+.cp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:5px;margin-bottom:10px;}
+.cpb{background:var(--bg3);border:1px solid var(--bd);color:var(--mt);padding:8px 6px;font-family:'Space Mono',monospace;font-size:7px;cursor:pointer;border-radius:2px;text-align:center;transition:all .15s;line-height:1.6;}
+.cpb:hover{border-color:var(--ac);color:var(--ac);}
+.cpb.on{background:var(--ac)15;border-color:var(--ac);color:var(--ac);}
+.cpb .cpn{font-size:9px;font-weight:700;display:block;margin-bottom:2px;}
+.cpb .cpd{font-size:7px;color:var(--mt);}
+.cp-preview-box{background:var(--bg);border:1px solid var(--ac2);border-radius:3px;padding:10px;margin-bottom:10px;}
+.cp-preview-title{font-family:'Space Mono',monospace;font-size:8px;color:var(--ac2);letter-spacing:2px;margin-bottom:6px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.cp-preview-row{display:flex;gap:5px;flex-wrap:wrap;align-items:center;}
+.cp-chip{background:var(--ac2)22;border:1px solid var(--ac2);border-radius:2px;padding:3px 9px;font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--ac2);letter-spacing:1px;}
+.cp-arrow{font-family:'Space Mono',monospace;font-size:10px;color:var(--mt);}
+.part-chord-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-top:10px;}
+.pc-card{background:var(--bg2);border:1px solid var(--bd);border-radius:3px;padding:9px;}
+.pc-part{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:2px;display:flex;align-items:center;gap:5px;margin-bottom:7px;}
+.pc-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.chord-seq{display:flex;gap:4px;flex-wrap:wrap;min-height:26px;padding:4px;background:var(--bg);border-radius:2px;border:1px solid var(--bd);margin-bottom:5px;}
+.chord-tag{padding:3px 8px;border-radius:2px;font-family:'Space Mono',monospace;font-size:9px;cursor:pointer;background:var(--ac)22;border:1px solid var(--ac);color:var(--ac);}
+.chord-tag:hover{opacity:.6;}
+.chord-empty{font-family:'Space Mono',monospace;font-size:8px;color:var(--mt);padding:3px;align-self:center;}
+.degree-btns{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:5px;}
+.deg-btn{padding:3px 6px;font-family:'Space Mono',monospace;font-size:7px;cursor:pointer;border-radius:2px;border:1px solid var(--bd);background:var(--bg3);color:var(--mt);transition:all .15s;}
+.deg-btn:hover{border-color:var(--ac2);color:var(--ac2);}
+.nl-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+.nl-item{background:var(--bg2);border:1px solid var(--bd);border-radius:3px;padding:7px 5px;text-align:center;}
+.nl-icon{font-size:14px;margin-bottom:2px;}
+.nl-name{font-family:'Space Mono',monospace;font-size:6px;color:var(--mt);margin-bottom:4px;letter-spacing:1px;}
+.nl-val{font-family:'Space Mono',monospace;font-size:12px;color:var(--ac3);margin-top:3px;font-weight:700;}
+.sq{display:flex;gap:4px;flex-wrap:wrap;min-height:30px;padding:5px;background:var(--bg);border-radius:2px;border:1px solid var(--bd);margin-bottom:8px;}
+.stt{padding:4px 8px;border-radius:2px;font-family:'Space Mono',monospace;font-size:8px;cursor:pointer;display:flex;align-items:center;gap:3px;}
+.stt:hover{opacity:.7;}
+.se{font-family:'Space Mono',monospace;font-size:8px;color:var(--mt);padding:4px;align-self:center;}
+.part-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;}
+.part-tab{background:var(--bg3);border:1px solid var(--bd);color:var(--mt);padding:5px 10px;font-family:'Space Mono',monospace;font-size:8px;cursor:pointer;border-radius:2px;transition:all .15s;letter-spacing:1px;}
+.part-tab.on{border-color:var(--ac2);color:var(--ac2);background:var(--ac2)15;}
+.part-panel{display:none;}
+.part-panel.vis{display:block;}
+.inst-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap;}
+
+/* ★ ギターUI新デザイン */
+.gtr-section{background:var(--bg3);border:1px solid var(--bd);border-radius:4px;padding:10px;margin-top:6px;}
+.gtr-basic-label{font-family:'Space Mono',monospace;font-size:8px;color:var(--ac2);letter-spacing:2px;margin-bottom:6px;}
+/* 基本パターン 5ボタン (①〜⑤) */
+.gtr-basic-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:10px;}
+.gtrb{background:var(--bg2);border:1px solid var(--bd);color:var(--mt);padding:8px 4px;font-family:'Space Mono',monospace;font-size:8px;cursor:pointer;border-radius:3px;text-align:center;transition:all .15s;line-height:1.4;}
+.gtrb:hover{border-color:var(--ac2);color:var(--ac2);}
+.gtrb.on{background:var(--ac2)20;border-color:var(--ac2);color:var(--ac2);}
+.gtrb .gbn{font-size:9px;font-weight:700;display:block;margin-bottom:2px;}
+.gtrb .gbd{font-size:6px;opacity:.7;}
+/* ★ アーティキュレーション 4ボタン */
+.gtr-art-label{font-family:'Space Mono',monospace;font-size:8px;color:var(--mt);letter-spacing:2px;margin-bottom:5px;display:flex;align-items:center;gap:5px;}
+.gtr-art-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:10px;}
+.gtra{background:var(--bg2);border:1px solid var(--bd);color:var(--mt);padding:7px 4px;font-family:'Space Mono',monospace;font-size:7px;cursor:pointer;border-radius:3px;text-align:center;transition:all .15s;line-height:1.5;}
+.gtra:hover{border-color:var(--ac3);color:var(--ac3);}
+.gtra.on{background:var(--ac3)18;border-color:var(--ac3);color:var(--ac3);}
+.gtra .gan{font-size:9px;font-weight:700;display:block;margin-bottom:2px;}
+.gtra .gad{font-size:6px;opacity:.7;}
+/* ★ 高度設定 折りたたみ */
+.adv-toggle{display:flex;align-items:center;gap:6px;cursor:pointer;padding:6px 0;user-select:none;border-top:1px solid var(--bd);}
+.adv-toggle-label{font-family:'Space Mono',monospace;font-size:7px;color:var(--mt);letter-spacing:2px;}
+.adv-toggle-arrow{font-size:10px;color:var(--mt);transition:transform .2s;margin-left:auto;}
+.adv-toggle.open .adv-toggle-arrow{transform:rotate(180deg);}
+.adv-body{display:none;padding-top:8px;}
+.adv-body.vis{display:block;}
+.adv-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:5px;}
+.advb{background:var(--bg);border:1px solid var(--bd);color:var(--mt);padding:7px 5px;font-family:'Space Mono',monospace;font-size:7px;cursor:pointer;border-radius:3px;text-align:center;transition:all .15s;line-height:1.5;}
+.advb:hover{border-color:var(--ac4);color:var(--ac4);}
+.advb.on{background:var(--ac4)15;border-color:var(--ac4);color:var(--ac4);}
+.advb .adn{font-size:8px;font-weight:700;display:block;margin-bottom:2px;}
+.advb .add{font-size:6px;opacity:.7;}
+/* ★ MAIN上書き・折りたたみ・カスタム */
+.ov-toggle{display:flex;align-items:center;gap:5px;cursor:pointer;margin-left:auto;font-family:'Space Mono',monospace;font-size:7px;color:var(--mt);padding:3px 8px;border:1px solid var(--bd);border-radius:2px;letter-spacing:1px;white-space:nowrap;}
+.ov-toggle.on{border-color:var(--ac5);color:var(--ac5);background:var(--ac5)15;}
+.ov-note{font-family:'Space Mono',monospace;font-size:8px;color:var(--mt);padding:8px;text-align:center;border:1px dashed var(--bd);border-radius:3px;}
+.fold{border-top:1px solid var(--bd);margin-top:6px;}
+.fold-toggle{display:flex;align-items:center;gap:6px;cursor:pointer;padding:7px 0;user-select:none;}
+.fold-toggle-label{font-family:'Space Mono',monospace;font-size:8px;color:var(--ac2);letter-spacing:2px;}
+.fold-toggle-arrow{font-size:10px;color:var(--mt);transition:transform .2s;margin-left:auto;}
+.fold-toggle.open .fold-toggle-arrow{transform:rotate(180deg);}
+.fold-body{display:none;padding-bottom:6px;}
+.fold-body.vis{display:block;}
+.cust-beat-row{display:grid;grid-template-columns:repeat(16,1fr);gap:2px;margin-bottom:2px;margin-top:8px;}
+.cust-beat{font-family:'Space Mono',monospace;font-size:6px;color:var(--mt);text-align:center;}
+.cust-grid{display:grid;grid-template-columns:repeat(16,1fr);gap:2px;}
+.cust-cell{aspect-ratio:1;background:var(--bg2);border:1px solid var(--bd);border-radius:2px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:9px;font-weight:700;color:var(--mt);transition:all .1s;min-height:20px;}
+.cust-cell:hover{border-color:var(--ac4);}
+.cust-cell.d{background:var(--ac2)28;border-color:var(--ac2);color:var(--ac2);}
+.cust-cell.u{background:var(--ac3)28;border-color:var(--ac3);color:var(--ac3);}
+.cust-hint{font-family:'Space Mono',monospace;font-size:6px;color:var(--mt);margin-top:5px;opacity:.8;line-height:1.6;}
+.cpc-row{display:flex;align-items:center;gap:6px;margin-bottom:10px;background:var(--bg3);border:1px solid var(--bd);border-radius:3px;padding:8px;}
+.cpc-row .lbl{margin:0;}
+
+.viz{height:60px;background:var(--bg2);border:1px solid var(--bd);border-radius:4px;margin-bottom:13px;overflow:hidden;position:relative;display:flex;align-items:center;}
+.vb{display:flex;gap:2px;align-items:center;height:100%;padding:7px 10px;width:100%;}
+.bar{flex:1;background:var(--bd);border-radius:1px;min-height:3px;transition:height .08s;}
+.vp{font-family:'Space Mono',monospace;font-size:9px;color:var(--mt);letter-spacing:2px;position:absolute;left:50%;transform:translateX(-50%);}
+.gr{margin:14px 0;display:flex;gap:8px;align-items:center;}
+.bg-gen{flex:1;background:var(--ac);color:var(--bg);border:none;padding:13px 20px;font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;cursor:pointer;border-radius:2px;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s;box-shadow:0 0 18px #e8ff4730;}
+.bg-gen:hover{transform:translateY(-2px);}
+.bg-gen.ld{background:var(--bg3);color:var(--ac);border:1px solid var(--ac);pointer-events:none;}
+.brn{background:transparent;border:1px solid var(--bd);color:var(--mt);padding:13px 14px;font-family:'Space Mono',monospace;font-size:13px;cursor:pointer;border-radius:2px;transition:all .15s;}
+.brn:hover{border-color:var(--ac3);color:var(--ac3);}
+.op{background:var(--bg2);border:1px solid var(--bd);border-radius:4px;padding:13px;display:none;}
+.op.vis{display:block;}
+.oh{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.ot{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--ac2);}
+.dl{background:var(--ac2);color:var(--bg);border:none;padding:7px 13px;font-family:'Space Mono',monospace;font-size:9px;font-weight:700;letter-spacing:2px;cursor:pointer;border-radius:2px;text-decoration:none;display:inline-flex;align-items:center;gap:4px;}
+.roll{background:var(--bg);border:1px solid var(--bd);border-radius:2px;height:86px;overflow:hidden;}
+canvas{width:100%;height:100%;}
+.bdg{display:flex;flex-wrap:wrap;gap:4px;margin-top:9px;}
+.bdg div{background:var(--bg3);border:1px solid var(--bd);padding:2px 7px;font-family:'Space Mono',monospace;font-size:8px;color:var(--mt);border-radius:2px;}
+.bdg div span{color:var(--ac);}
+@keyframes sc{0%{left:-4px}100%{left:100%}}
+.sc::after{content:'';position:absolute;top:0;bottom:0;width:3px;background:var(--ac);opacity:.8;animation:sc .8s linear infinite;}
+@keyframes fu{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.fi{animation:fu .3s ease forwards;}
+
+/* ★ v7.7.0 フレーズ設計 */
+.fd-section{background:var(--bg3);border:1px solid var(--ac4);border-radius:4px;padding:10px;margin-bottom:10px;}
+.fd-section-label{font-family:'Space Mono',monospace;font-size:8px;color:var(--ac4);letter-spacing:3px;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.fd-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.fd-cell{background:var(--bg2);border:1px solid var(--bd);border-radius:3px;padding:7px;}
+.fd-cell-label{font-family:'Space Mono',monospace;font-size:7px;color:var(--mt);letter-spacing:1px;margin-bottom:5px;display:flex;justify-content:space-between;}
+.fd-cell-label span{color:var(--ac4);font-weight:700;}
+.sp-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;}
+.spb{background:var(--bg3);border:1px solid var(--bd);color:var(--mt);padding:5px 3px;font-family:'Space Mono',monospace;font-size:7px;cursor:pointer;border-radius:2px;text-align:center;transition:all .15s;line-height:1.4;}
+.spb:hover{border-color:var(--ac4);color:var(--ac4);}
+.spb.on{background:var(--ac4)18;border-color:var(--ac4);color:var(--ac4);font-weight:700;}
+.spb .spn{font-size:8px;font-weight:700;display:block;margin-bottom:1px;}
+.spb .spd{font-size:6px;opacity:.65;}
+.fl-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;}
+.flb{background:var(--bg3);border:1px solid var(--bd);color:var(--mt);padding:6px 4px;font-family:'Space Mono',monospace;font-size:8px;cursor:pointer;border-radius:2px;text-align:center;transition:all .15s;}
+.flb:hover{border-color:var(--ac4);color:var(--ac4);}
+.flb.on{background:var(--ac4)18;border-color:var(--ac4);color:var(--ac4);font-weight:700;}
+.auto-params{margin-top:8px;padding-top:8px;border-top:1px solid var(--bd);}
+.auto-params.hidden{display:none;}
+
+/* ★ v7.7.0 フレーズ継承 */
+.fi-section{background:var(--bg2);border:1px solid var(--bd);border-radius:3px;padding:8px;margin-bottom:6px;}
+.fi-part-header{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
+.fi-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.fi-part-name{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:1px;}
+.fi-mode-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-bottom:6px;}
+.fimb{background:var(--bg3);border:1px solid var(--bd);color:var(--mt);padding:6px 4px;font-family:'Space Mono',monospace;font-size:7px;cursor:pointer;border-radius:2px;text-align:center;transition:all .15s;line-height:1.4;}
+.fimb:hover{border-color:var(--ac2);color:var(--ac2);}
+.fimb.on{background:var(--ac2)18;border-color:var(--ac2);color:var(--ac2);font-weight:700;}
+.fimb .fimn{font-size:8px;font-weight:700;display:block;margin-bottom:1px;}
+.fimb .fimd{font-size:6px;opacity:.65;}
+.fi-var-row{margin-top:5px;padding-top:5px;border-top:1px dashed var(--bd);}
+.fi-var-row.hidden{display:none;}
+.fi-sync-row{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
+.fi-sync-check{width:10px;height:10px;accent-color:var(--ac4);cursor:pointer;}
+.fi-sync-label{font-family:'Space Mono',monospace;font-size:7px;color:var(--mt);}
+.fi-off-opts{margin-top:4px;padding:4px;background:var(--bg);border:1px dashed var(--bd);border-radius:2px;}
+.fi-struct-opt{display:flex;align-items:center;gap:5px;}
+.fi-struct-check{width:10px;height:10px;accent-color:var(--ac2);cursor:pointer;}
+
+/* ★ v7.7.0 コード機能カラー */
+.chord-tag.tonic{background:#47b3ff22;border-color:#47b3ff;color:#47b3ff;}
+.chord-tag.subdominant{background:#47ff8722;border-color:#47ff87;color:#47ff87;}
+.chord-tag.dominant{background:#ff474722;border-color:#ff6b47;color:#ff6b47;}
+.deg-btn.tonic{border-color:#47b3ff88;color:#47b3ff;}
+.deg-btn.subdominant{border-color:#47ff8788;color:#47ff87;}
+.deg-btn.dominant{border-color:#ff474788;color:#ff6b47;}
+.deg-btn.tonic:hover,.deg-btn.tonic.active{background:#47b3ff22;border-color:#47b3ff;}
+.deg-btn.subdominant:hover,.deg-btn.subdominant.active{background:#47ff8722;border-color:#47ff87;}
+.deg-btn.dominant:hover,.deg-btn.dominant.active{background:#ff474722;border-color:#ff6b47;}
+.chord-func-legend{display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap;}
+.cfl-item{display:flex;align-items:center;gap:3px;font-family:'Space Mono',monospace;font-size:6px;}
+.cfl-dot{width:6px;height:6px;border-radius:50%;}
+
+/* ★ v8.0 GLOBAL MOTIF */
+.gm-section{background:var(--bg3);border:1px solid var(--ac);border-radius:4px;padding:10px;margin-bottom:10px;}
+.gm-label{font-family:'Space Mono',monospace;font-size:8px;color:var(--ac);letter-spacing:3px;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.gm-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.gm-card{background:var(--bg2);border:1px solid var(--bd);border-radius:3px;padding:8px;}
+.gm-card-title{font-family:'Space Mono',monospace;font-size:9px;font-weight:700;letter-spacing:2px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;}
+.gm-notes{display:flex;gap:2px;flex-wrap:wrap;min-height:22px;padding:4px;background:var(--bg);border:1px solid var(--bd);border-radius:2px;margin-bottom:5px;}
+.gm-note{font-family:'Space Mono',monospace;font-size:8px;padding:2px 4px;border-radius:1px;font-weight:700;}
+.gm-gen{background:var(--ac);border:none;color:var(--bg);padding:5px 10px;font-family:'Space Mono',monospace;font-size:8px;font-weight:700;cursor:pointer;border-radius:2px;letter-spacing:1px;transition:all .15s;}
+.gm-gen:hover{opacity:.8;}
+.gm-gen.prime{background:var(--ac2);}
+.gm-empty{font-family:'Space Mono',monospace;font-size:7px;color:var(--mt);align-self:center;}
+
+/* ★ v8.0 PART PHRASE DESIGN */
+.ppd-section{background:var(--bg2);border:1px solid var(--bd);border-radius:3px;padding:8px;margin-bottom:6px;}
+.ppd-part-header{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
+.ppd-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.ppd-part-name{font-family:'Space Mono',monospace;font-size:8px;font-weight:700;letter-spacing:1px;}
+.ppd-mode-tabs{display:flex;gap:3px;margin-bottom:8px;}
+.ppd-mode-tab{background:var(--bg3);border:1px solid var(--bd);color:var(--mt);padding:4px 8px;font-family:'Space Mono',monospace;font-size:7px;cursor:pointer;border-radius:2px;transition:all .15s;letter-spacing:1px;}
+.ppd-mode-tab.on{border-color:var(--ac4);color:var(--ac4);background:var(--ac4)15;}
+.ppd-phrase-body{padding-top:6px;border-top:1px solid var(--bd);}
+.ppd-phrase-body.hidden{display:none;}
+.ppd-ref-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-bottom:7px;}
+.ppd-ref-btn{background:var(--bg3);border:1px solid var(--bd);color:var(--mt);padding:5px 3px;font-family:'Space Mono',monospace;font-size:7px;cursor:pointer;border-radius:2px;text-align:center;transition:all .15s;line-height:1.4;}
+.ppd-ref-btn:hover{border-color:var(--ac);color:var(--ac);}
+.ppd-ref-btn.on{background:var(--ac)18;border-color:var(--ac);color:var(--ac);font-weight:700;}
+.ppd-ref-btn .prn{font-size:8px;font-weight:700;display:block;margin-bottom:1px;}
+.ppd-ref-btn .prd{font-size:6px;opacity:.65;}
+.ppd-fl-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;margin-bottom:7px;}
+.ppd-fl-btn{background:var(--bg3);border:1px solid var(--bd);color:var(--mt);padding:5px 3px;font-family:'Space Mono',monospace;font-size:8px;cursor:pointer;border-radius:2px;text-align:center;transition:all .15s;}
+.ppd-fl-btn:hover{border-color:var(--ac4);color:var(--ac4);}
+.ppd-fl-btn.on{background:var(--ac4)18;border-color:var(--ac4);color:var(--ac4);font-weight:700;}
+.ppd-pattern-row{display:flex;align-items:center;gap:6px;margin-bottom:5px;}
+.ppd-pattern-input{background:var(--bg);border:1px solid var(--bd);color:var(--ac);padding:4px 8px;font-family:'Space Mono',monospace;font-size:12px;font-weight:700;letter-spacing:3px;border-radius:2px;width:120px;text-transform:uppercase;outline:none;}
+.ppd-pattern-input:focus{border-color:var(--ac4);}
+.ppd-bars-calc{font-family:'Space Mono',monospace;font-size:9px;color:var(--ac3);font-weight:700;}
+.ppd-pattern-hint{font-family:'Space Mono',monospace;font-size:6px;color:var(--mt);margin-top:3px;line-height:1.6;}
+.ppd-commit{background:var(--ac4);border:none;color:var(--bg);padding:5px 12px;font-family:'Space Mono',monospace;font-size:8px;font-weight:700;cursor:pointer;border-radius:2px;letter-spacing:1px;margin-top:6px;}
+.ppd-commit:hover{opacity:.8;}
+
+/* ★ v8.0 PHRASE LIBRARY */
+.pl-section{background:var(--bg2);border:1px solid var(--ac4);border-radius:3px;padding:8px;margin-bottom:6px;}
+.pl-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+.pl-title{font-family:'Space Mono',monospace;font-size:8px;color:var(--ac4);font-weight:700;letter-spacing:2px;display:flex;align-items:center;gap:5px;}
+.pl-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.pl-meta{font-family:'Space Mono',monospace;font-size:7px;color:var(--mt);}
+.pl-pattern-display{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:4px;}
+.pl-pat-chip{font-family:'Bebas Neue',sans-serif;font-size:14px;padding:2px 5px;border-radius:2px;font-weight:700;min-width:18px;text-align:center;}
+.pl-bars-badge{font-family:'Space Mono',monospace;font-size:7px;color:var(--ac3);background:var(--ac3)18;border:1px solid var(--ac3)44;padding:2px 5px;border-radius:2px;}
+.pl-ref-badge{font-family:'Space Mono',monospace;font-size:7px;padding:2px 5px;border-radius:2px;margin-left:4px;}
+
+/* ★ v8.0 STRUCTURE v2 */
+.s5-part-row{display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--bg3);border:1px solid var(--bd);border-radius:3px;margin-bottom:4px;flex-wrap:wrap;}
+.s5-part-badge{font-family:'Space Mono',monospace;font-size:8px;font-weight:700;padding:3px 8px;border-radius:2px;min-width:80px;text-align:center;}
+.s5-part-bars{font-family:'Space Mono',monospace;font-size:8px;color:var(--ac3);}
+.s5-part-pattern{font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2px;color:var(--mt);}
+.s5-remove{background:transparent;border:1px solid var(--ac3)44;color:var(--ac3)88;padding:2px 6px;font-family:'Space Mono',monospace;font-size:7px;cursor:pointer;border-radius:2px;transition:all .12s;margin-left:auto;}
+.s5-remove:hover{border-color:var(--ac3);color:var(--ac3);}
+
+</style>
+
+<div class="modal-ov" id="ABOUT_MODAL" onclick="if(event.target===this)document.getElementById('ABOUT_MODAL').classList.remove('vis')">
+  <div class="modal-box">
+    <div class="modal-logo">PHRASE<span>ARCHITECT</span></div>
+    <div class="modal-sub">Created by TK Music Lab</div>
+    <div class="modal-author">Author: Shevatyl</div>
+    <button class="modal-close" onclick="document.getElementById('ABOUT_MODAL').classList.remove('vis')">CLOSE</button>
+  </div>
+</div>
+
+<div class="w">
+<div class="hdr">
+  <div class="logo">PHRASE<span>ARCHITECT</span></div>
+  <button class="abt" onclick="document.getElementById('ABOUT_MODAL').classList.add('vis')">ABOUT</button>
+</div>
+<div class="ver">v8.0.5</div>
+
+<!-- STEP1 -->
+<div class="step open" id="s1">
+  <div class="step-header" onclick="toggleStep('s1')">
+    <div class="step-num">01</div><div><div class="step-title">基本設定</div><div class="step-sub">Title / Key / Scale / BPM / Octave / 拍子</div></div><span class="step-arrow">▼</span>
+  </div>
+  <div class="step-body">
+    <div style="margin-bottom:10px;"><span class="lbl">TITLE</span><input type="text" id="TITLE" placeholder="（未入力時: melody_Key_Scale_BPM）" style="width:100%;background:var(--bg3);border:1px solid var(--bd);color:var(--tx);padding:6px 10px;border-radius:2px;font-family:'Space Mono',monospace;font-size:10px;outline:none;"></div>
+    <div class="g4" style="margin-bottom:10px;">
+      <div><span class="lbl">KEY</span><select id="KEY"><option value="60">C</option><option value="62">D</option><option value="64">E</option><option value="65">F</option><option value="67" selected>G</option><option value="69">A</option><option value="71">B</option><option value="57">Am</option><option value="59">Bm</option><option value="50">Dm</option><option value="52">Em</option></select></div>
+      <div><span class="lbl">SCALE</span><select id="SCALE"><option value="major">メジャー</option><option value="natural_minor">ナチュラルマイナー</option><option value="harmonic_minor">ハーモニックマイナー</option><option value="pentatonic" selected>ペンタトニック</option><option value="blues">ブルース</option><option value="dorian">ドリアン</option><option value="mixolydian">ミクソリディアン</option><option value="lydian">リディアン</option><option value="phrygian">フリジアン</option><option value="locrian">ロクリアン</option></select></div>
+      <div><span class="lbl">OCTAVE</span><select id="OCT"><option value="4">低め(3-4)</option><option value="5" selected>中(4-5)</option><option value="6">高め(5-6)</option><option value="0">ワイド</option></select></div>
+      <div><span class="lbl">BPM <span id="TVL" style="color:var(--ac)">100</span></span><input type="range" id="TEMPO" min="60" max="200" value="100" step="2" oninput="document.getElementById('TVL').textContent=this.value" style="margin-top:8px;accent-color:var(--ac)"></div>
+    </div>
+    <span class="lbl">拍子</span>
+    <div class="g4" id="TS_BTNS">
+      <button class="mb on" data-ts="4/4" onclick="selTS(this)">4/4</button>
+      <button class="mb" data-ts="3/4" onclick="selTS(this)">3/4</button>
+      <button class="mb" data-ts="6/8" onclick="selTS(this)">6/8</button>
+      <button class="mb" data-ts="5/4" onclick="selTS(this)">5/4</button>
+    </div>
+  </div>
+</div>
+
+<!-- STEP2 -->
+<div class="step open" id="s2">
+  <div class="step-header" onclick="toggleStep('s2')">
+    <div class="step-num">02</div><div><div class="step-title">雰囲気 / MOOD</div><div class="step-sub">プリセット + 6軸 + 音符長の割合 + Global Motif</div></div><span class="step-arrow">▼</span>
+  </div>
+  <div class="step-body">
+    <div class="mood-grid" id="MOOD_BTNS">
+      <button class="mood-btn on" data-mood="folk" onclick="selMood(this)"><span class="mn">🌿 フォーク</span><span class="ms">穏やか</span></button>
+      <button class="mood-btn" data-mood="pop" onclick="selMood(this)"><span class="mn">✨ ポップ</span><span class="ms">明るい</span></button>
+      <button class="mood-btn" data-mood="jazz" onclick="selMood(this)"><span class="mn">🎷 ジャズ</span><span class="ms">洗練</span></button>
+      <button class="mood-btn" data-mood="epic" onclick="selMood(this)"><span class="mn">⚡ エピック</span><span class="ms">壮大</span></button>
+      <button class="mood-btn" data-mood="sad" onclick="selMood(this)"><span class="mn">🌧 悲しい</span><span class="ms">内省</span></button>
+      <button class="mood-btn" data-mood="happy" onclick="selMood(this)"><span class="mn">☀️ 明るい</span><span class="ms">ポジティブ</span></button>
+      <button class="mood-btn" data-mood="cinematic" onclick="selMood(this)"><span class="mn">🎬 シネマ</span><span class="ms">映画的</span></button>
+      <button class="mood-btn" data-mood="lofi" onclick="selMood(this)"><span class="mn">📻 Lo-Fi</span><span class="ms">チル</span></button>
+      <button class="mood-btn" data-mood="dark" onclick="selMood(this)"><span class="mn">🌑 ダーク</span><span class="ms">緊張</span></button>
+      <button class="mood-btn" data-mood="romantic" onclick="selMood(this)"><span class="mn">💕 ロマンチック</span><span class="ms">甘い</span></button>
+      <button class="mood-btn" data-mood="tense" onclick="selMood(this)"><span class="mn">⚔️ テンション</span><span class="ms">緊迫</span></button>
+      <button class="mood-btn" data-mood="playful" onclick="selMood(this)"><span class="mn">🎮 プレイフル</span><span class="ms">軽快</span></button>
+    </div>
+    <div class="mood-params">
+      <div class="mp-row"><div class="mp-label">音域中心 <span id="PCV">0.50</span></div><input type="range" id="PC" min="0" max="100" value="50" step="5" oninput="setMPDisp('PCV',this.value)" style="accent-color:var(--ac2)"><div class="mp-hint">0.0=低音域　1.0=高音域</div></div>
+      <div class="mp-row"><div class="mp-label">跳躍確率 <span id="LPV">0.30</span></div><input type="range" id="LP" min="0" max="100" value="30" step="5" oninput="setMPDisp('LPV',this.value)" style="accent-color:var(--ac)"><div class="mp-hint">0.0=順次進行　1.0=跳躍</div></div>
+      <div class="mp-row"><div class="mp-label">上昇/下降傾向 <span id="ARV">0.0</span></div><input type="range" id="AR" min="-100" max="100" value="0" step="10" oninput="setARDisp(this.value)" style="accent-color:var(--ac5)"><div class="mp-hint">-1=下降　0=中立　+1=上昇</div></div>
+      <div class="mp-row"><div class="mp-label">コードトーン依存度 <span id="CDV">0.50</span></div><input type="range" id="CD" min="0" max="100" value="50" step="5" oninput="setMPDisp('CDV',this.value)" style="accent-color:var(--ac2)"><div class="mp-hint">0.0=スケール優先　1.0=コード優先（★Global Motifのみに適用。パート別はPPDで個別設定）</div></div>
+    </div>
+    <div style="margin-top:12px;">
+      <!-- ★ v8.0 音符長の割合（旧STEP4より移動・折りたたみ式） -->
+      <div class="fold">
+        <div class="fold-toggle" id="NR_FOLD" onclick="toggleFold('NR_FOLD','NR_BODY')">
+          <span class="fold-toggle-label">音符長の割合（11種：音符6 + 休符5）</span>
+          <span class="fold-toggle-arrow">▼</span>
+        </div>
+        <div class="fold-body" id="NR_BODY">
+          <div class="pbr" style="margin-top:8px;">
+            <button class="pb" onclick="setNP('ballad')">🌙 バラード</button>
+            <button class="pb" onclick="setNP('folk')">🌿 フォーク</button>
+            <button class="pb" onclick="setNP('pop')">✨ ポップ</button>
+            <button class="pb" onclick="setNP('uptempo')">⚡ アップテンポ</button>
+            <button class="pb" onclick="setNP('jazz')">🎷 ジャズ</button>
+          </div>
+          <div style="font-family:'Space Mono',monospace;font-size:8px;color:var(--mt);letter-spacing:2px;margin-bottom:6px">音符</div>
+          <div class="nl-grid" style="margin-bottom:8px;">
+            <div class="nl-item"><div class="nl-icon">𝅝</div><div class="nl-name">全音符</div><input type="range" id="NW0" min="0" max="5" value="1" oninput="document.getElementById('NV0').textContent=this.value" style="accent-color:var(--ac3)"><div class="nl-val" id="NV0">1</div></div>
+            <div class="nl-item"><div class="nl-icon">𝅗𝅥</div><div class="nl-name">2分音符</div><input type="range" id="NW1" min="0" max="5" value="1" oninput="document.getElementById('NV1').textContent=this.value" style="accent-color:var(--ac3)"><div class="nl-val" id="NV1">1</div></div>
+            <div class="nl-item"><div class="nl-icon">♩</div><div class="nl-name">4分音符</div><input type="range" id="NW2" min="0" max="5" value="3" oninput="document.getElementById('NV2').textContent=this.value" style="accent-color:var(--ac3)"><div class="nl-val" id="NV2">3</div></div>
+            <div class="nl-item"><div class="nl-icon">♪</div><div class="nl-name">8分音符</div><input type="range" id="NW3" min="0" max="5" value="3" oninput="document.getElementById('NV3').textContent=this.value" style="accent-color:var(--ac3)"><div class="nl-val" id="NV3">3</div></div>
+            <div class="nl-item"><div class="nl-icon">♬</div><div class="nl-name">16分音符</div><input type="range" id="NW4" min="0" max="5" value="1" oninput="document.getElementById('NV4').textContent=this.value" style="accent-color:var(--ac3)"><div class="nl-val" id="NV4">1</div></div>
+            <div class="nl-item"><div class="nl-icon">♩.</div><div class="nl-name">付点4分</div><input type="range" id="NW5" min="0" max="5" value="1" oninput="document.getElementById('NV5').textContent=this.value" style="accent-color:var(--ac3)"><div class="nl-val" id="NV5">1</div></div>
+          </div>
+          <div style="font-family:'Space Mono',monospace;font-size:8px;color:var(--mt);letter-spacing:2px;margin-bottom:6px">休符</div>
+          <div class="nl-grid">
+            <div class="nl-item"><div class="nl-icon">𝄻</div><div class="nl-name">全休符</div><input type="range" id="NW6" min="0" max="5" value="0" oninput="document.getElementById('NV6').textContent=this.value" style="accent-color:var(--mt)"><div class="nl-val" id="NV6" style="color:var(--mt)">0</div></div>
+            <div class="nl-item"><div class="nl-icon">𝄼</div><div class="nl-name">2分休符</div><input type="range" id="NW7" min="0" max="5" value="0" oninput="document.getElementById('NV7').textContent=this.value" style="accent-color:var(--mt)"><div class="nl-val" id="NV7" style="color:var(--mt)">0</div></div>
+            <div class="nl-item"><div class="nl-icon">𝄽</div><div class="nl-name">4分休符</div><input type="range" id="NW8" min="0" max="5" value="1" oninput="document.getElementById('NV8').textContent=this.value" style="accent-color:var(--mt)"><div class="nl-val" id="NV8" style="color:var(--mt)">1</div></div>
+            <div class="nl-item"><div class="nl-icon">𝄾</div><div class="nl-name">8分休符</div><input type="range" id="NW9" min="0" max="5" value="0" oninput="document.getElementById('NV9').textContent=this.value" style="accent-color:var(--mt)"><div class="nl-val" id="NV9" style="color:var(--mt)">0</div></div>
+            <div class="nl-item"><div class="nl-icon">𝄿</div><div class="nl-name">16分休符</div><input type="range" id="NW10" min="0" max="5" value="0" oninput="document.getElementById('NV10').textContent=this.value" style="accent-color:var(--mt)"><div class="nl-val" id="NV10" style="color:var(--mt)">0</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ★ v8.0 GLOBAL MOTIF -->
+      <span class="lbl">Global Motif（グローバルモチーフ）</span>
+      <div class="gm-section">
+        <div class="gm-label">🎵 GLOBAL MOTIF<span style="font-size:6px;color:var(--mt);letter-spacing:1px">曲全体で共有する原型モチーフ。パートフレーズのReferenceに使用。</span></div>
+        <div style="margin-bottom:8px;">
+          <button class="gm-gen" style="background:var(--ac3)" onclick="openMikuGenerator()">🎤 Miku MIDI Phrase Pack Generatorで作成</button>
+          <span id="MIKU_IMPORT_STATUS" style="font-family:'Space Mono',monospace;font-size:6px;color:var(--mt);margin-left:6px">ポップアップで生成 → プレビューの「→PA」で取り込み</span>
+        </div>
+        <div class="fd-cell" style="margin-bottom:8px;">
+          <div class="fd-cell-label">フレーズ長 <span id="FL_VAL">2小節</span></div>
+          <div class="fl-grid" id="FL_BTNS">
+            <button class="flb" data-fl="1" onclick="selFL(this)">1小節</button>
+            <button class="flb on" data-fl="2" onclick="selFL(this)">2小節</button>
+            <button class="flb" data-fl="3" onclick="selFL(this)">3小節</button>
+            <button class="flb" data-fl="4" onclick="selFL(this)">4小節</button>
+          </div>
+          <div style="font-family:'Space Mono',monospace;font-size:6px;color:var(--mt);margin-top:3px">Global Motifの全体の長さ（2小節＝2小節ひと続きの旋律。1小節×2回ではない）。Part Phrase DesignのReferenceにA/A'を選択した際の既定値として使用。</div>
+        </div>
+        <div class="gm-row">
+          <!-- A モチーフ -->
+          <div class="gm-card">
+            <div class="gm-card-title"><span style="color:var(--ac)">A  モチーフ</span><button class="gm-gen" id="GM_A_BTN" onclick="genGlobalMotif('A')">▶ Generate</button></div>
+            <div class="gm-notes" id="GM_A_NOTES"><span class="gm-empty">未生成</span></div>
+            <div style="font-family:'Space Mono',monospace;font-size:6px;color:var(--mt);margin-top:3px">フレーズ長・反復率は下記設定に準拠</div>
+          </div>
+          <!-- A' モチーフ -->
+          <div class="gm-card">
+            <div class="gm-card-title"><span style="color:var(--ac2)">A' モチーフ</span><button class="gm-gen prime" id="GM_AP_BTN" onclick="genGlobalMotif('Ap')">▶ Generate</button></div>
+            <div class="gm-notes" id="GM_AP_NOTES"><span class="gm-empty">未生成</span></div>
+            <div style="font-family:'Space Mono',monospace;font-size:6px;color:var(--mt);margin-top:3px">Aモチーフを変形して生成</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="step" id="s3">
+  <div class="step-header" onclick="toggleStep('s3')">
+    <div class="step-num">03</div><div><div class="step-title">コード進行</div><div class="step-sub">共通プリセット15種 + パート別手動入力</div></div><span class="step-arrow">▼</span>
+  </div>
+  <div class="step-body">
+    <span class="lbl">共通プリセット</span>
+    <div class="cp-grid" id="CP_BTNS">
+      <button class="cpb on" data-cp="major" onclick="selCP(this)"><span class="cpn">🎵 ダイアトニック</span><span class="cpd">I IIm IV V VIm</span></button>
+      <button class="cpb" data-cp="p1564" onclick="selCP(this)"><span class="cpn">👑 1564進行</span><span class="cpd">I V VIm IV</span></button>
+      <button class="cpb" data-cp="p4536" onclick="selCP(this)"><span class="cpn">😢 4536進行</span><span class="cpd">IV V IIIm VIm</span></button>
+      <button class="cpb" data-cp="p251" onclick="selCP(this)"><span class="cpn">🎷 2-5-1</span><span class="cpd">IIm7 V7 Imaj7</span></button>
+      <button class="cpb" data-cp="p6451" onclick="selCP(this)"><span class="cpn">🌧 6451進行</span><span class="cpd">VIm IV V I</span></button>
+      <button class="cpb" data-cp="p1541" onclick="selCP(this)"><span class="cpn">⚡ 1541進行</span><span class="cpd">I V IV I</span></button>
+      <button class="cpb" data-cp="p50s" onclick="selCP(this)"><span class="cpn">🎸 50's進行</span><span class="cpd">I VIm IV V</span></button>
+      <button class="cpb" data-cp="pAxis" onclick="selCP(this)"><span class="cpn">🌐 Axis進行</span><span class="cpd">I VIm III VII</span></button>
+      <button class="cpb" data-cp="p2516" onclick="selCP(this)"><span class="cpn">🎺 2516進行</span><span class="cpd">IIm V I VIm</span></button>
+      <button class="cpb" data-cp="pFlamenco" onclick="selCP(this)"><span class="cpn">💃 フラメンコ</span><span class="cpd">Im VII VI VII</span></button>
+      <button class="cpb" data-cp="pBlues" onclick="selCP(this)"><span class="cpn">🔵 ブルース</span><span class="cpd">I7 IV7 I7 V7</span></button>
+      <button class="cpb" data-cp="pModal" onclick="selCP(this)"><span class="cpn">🌊 モーダル</span><span class="cpd">I bVII IV I</span></button>
+      <button class="cpb" data-cp="p1625" onclick="selCP(this)"><span class="cpn">💜 1625進行</span><span class="cpd">I VIm IIm V</span></button>
+      <button class="cpb" data-cp="pMinLoop" onclick="selCP(this)"><span class="cpn">🌀 マイナーループ</span><span class="cpd">VIm IV I V</span></button>
+      <button class="cpb" data-cp="pJTTOU" onclick="selCP(this)"><span class="cpn">🎵 丸サ進行</span><span class="cpd">IV IIIm VIm I</span></button>
+    </div>
+    <div class="cp-preview-box">
+      <div class="cp-preview-title">
+        共通進行プレビュー
+        <span style="font-family:'Space Mono',monospace;font-size:7px;color:var(--mt)">（パート個別未設定時に使用）</span>
+      </div>
+      <div class="cp-preview-row" id="CP_PREVIEW"></div>
+    </div>
+    <span class="lbl">パート別コード入力（空=共通プリセット）</span>
+    <div class="part-chord-grid" id="PART_CHORD_GRID"></div>
+  </div>
+</div>
+
+<!-- STEP4 -->
+<div class="step" id="s4">
+  <div class="step-header" onclick="toggleStep('s4')">
+    <div class="step-num">04</div><div><div class="step-title">フレーズ設計</div><div class="step-sub">共通パラメータ + Part Phrase Design + Phrase Library</div></div><span class="step-arrow">▼</span>
+  </div>
+  <div class="step-body">
+    <!-- ★ v8.0 フレーズ設計（共通パラメータ・旧ロジック） -->
+    <div class="fold">
+      <div class="fold-toggle" id="FD_FOLD" onclick="toggleFold('FD_FOLD','FD_BODY')">
+        <span class="fold-toggle-label">フレーズ設計（共通パラメータ）※旧ロジック</span>
+        <span class="fold-toggle-arrow">▼</span>
+      </div>
+      <div class="fold-body" id="FD_BODY">
+        <div class="fd-section" style="margin-top:8px;">
+          <div class="fd-section-label">🎼 PHRASE DESIGN<span style="font-size:6px;color:var(--mt);letter-spacing:1px">曲全体共通のフレーズ構造（フレーズ長はSTEP02 Global Motifへ移動しました）</span></div>
+          <div class="fd-cell">
+            <div class="fd-cell-label">セットパターン <span id="SP_VAL">AUTO</span></div>
+            <div class="sp-grid" id="SP_BTNS">
+              <button class="spb on" data-sp="AUTO" onclick="selSP(this)"><span class="spn">AUTO</span><span class="spd">自動</span></button>
+              <button class="spb" data-sp="1A" onclick="selSP(this)"><span class="spn">1A</span><span class="spd">A</span></button>
+              <button class="spb" data-sp="1A2A" onclick="selSP(this)"><span class="spn">1A2A</span><span class="spd">AA</span></button>
+              <button class="spb" data-sp="1A2B" onclick="selSP(this)"><span class="spn">1A2B</span><span class="spd">AB</span></button>
+              <button class="spb" data-sp="1A2A3A" onclick="selSP(this)"><span class="spn">3A</span><span class="spd">AAA</span></button>
+              <button class="spb" data-sp="1A2B3A" onclick="selSP(this)"><span class="spn">ABA</span><span class="spd">ABA</span></button>
+              <button class="spb" data-sp="1A2B3C" onclick="selSP(this)"><span class="spn">ABC</span><span class="spd">ABC</span></button>
+              <button class="spb" data-sp="1A2A3B4B" onclick="selSP(this)"><span class="spn">AABB</span><span class="spd">AABB</span></button>
+              <button class="spb" data-sp="1A2B3A4B" onclick="selSP(this)"><span class="spn">ABAB</span><span class="spd">ABAB</span></button>
+              <button class="spb" data-sp="1A2B3A4C" onclick="selSP(this)"><span class="spn">ABAC</span><span class="spd">ABAC</span></button>
+              <button class="spb" data-sp="1A2B3C4D" onclick="selSP(this)"><span class="spn">ABCD</span><span class="spd">ABCD</span></button>
+            </div>
+          </div>
+          <div class="auto-params" id="AUTO_PARAMS" style="margin-top:8px;">
+            <div class="mp-row"><div class="mp-label">フレーズ反復率 <span id="RRV">0.30</span></div><input type="range" id="RR" min="0" max="100" value="30" step="5" oninput="setMPDisp('RRV',this.value)" style="accent-color:var(--ac3)"><div class="mp-hint">0.0=毎回新規生成(ABCD)　1.0=反復(AAAA)</div></div>
+            <div class="mp-row" style="margin-top:6px"><div class="mp-label">フレーズ内変形率 <span id="VRV">0.20</span></div><input type="range" id="VR" min="0" max="100" value="20" step="5" oninput="setMPDisp('VRV',this.value);syncFIVarRate();" style="accent-color:var(--ac4)"><div class="mp-hint">0.0=そのまま反復　1.0=毎回大きく変形（A→A' A''）</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ★ v8.0 PART PHRASE DESIGN -->
+    <span class="lbl">Part Phrase Design（パート別フレーズ設計）</span>
+    <div style="font-family:'Space Mono',monospace;font-size:7px;color:var(--mt);margin-bottom:8px;line-height:1.6">
+      各パートに①②の2スロット。パート名をクリックして展開・折りたたみ。Patternの文字数 × フレーズ長 = 小節数。<br>
+      フレーズ長は<span style="color:var(--ac5)">モチーフ全体の長さ</span>（2小節 = 2小節ひと続きの旋律）。Global Motifと異なる長さ→自動ラップ/トランケート。<br>
+      <span style="color:var(--ac4)">A</span>=原型 <span style="color:var(--ac4)">B</span>=リズム変更 <span style="color:var(--ac4)">C</span>=音程変更 <span style="color:var(--ac4)">D</span>=後半変更 <span style="color:var(--ac4)">E</span>=音程逆行 <span style="color:var(--ac4)">F</span>=後半2連 <span style="color:#ffd447">X</span>=新規生成（毎回ユニーク）
+    </div>
+    <div id="PPD_GRID"></div>
+
+    <!-- ★ v8.0 PHRASE LIBRARY（旧STEP2.5より移動・折りたたみ式） -->
+    <div class="fold" style="margin-top:10px;">
+      <div class="fold-toggle" id="PL_FOLD" onclick="toggleFold('PL_FOLD','PL_BODY')">
+        <span class="fold-toggle-label">Phrase Library（設計済みフレーズ一覧）</span>
+        <span class="fold-toggle-arrow">▼</span>
+      </div>
+      <div class="fold-body" id="PL_BODY">
+        <div style="display:flex;gap:5px;align-items:center;margin-bottom:10px;flex-wrap:wrap;margin-top:8px;">
+          <button class="pb" onclick="syncLibraryFromPPD()">🔄 フレーズ設計から同期</button>
+          <span style="font-family:'Space Mono',monospace;font-size:7px;color:var(--mt)">設計を変更した後に押して更新</span>
+        </div>
+        <div id="PHRASE_LIBRARY"></div>
+        <div style="margin-top:8px;font-family:'Space Mono',monospace;font-size:7px;color:var(--mt);line-height:1.7">
+          ※ パートのフレーズ設計後「同期」を押すとSTEP5のストラクチャーに追加ボタンが表示されます。<br>
+          ※ 同一パート（例：Chorus）を複数デザインしたい場合は、STEP5で繰り返し配置してください。
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP5 -->
+<div class="step" id="s5">
+  <div class="step-header" onclick="toggleStep('s5')">
+    <div class="step-num">05</div><div><div class="step-title">楽曲ストラクチャー</div><div class="step-sub">Phrase Libraryからパートを配置 / クイック追加も可能</div></div><span class="step-arrow">▼</span>
+  </div>
+  <div class="step-body">
+    <!-- Phrase Libraryからの配置 -->
+    <div style="margin-bottom:10px;">
+      <span class="lbl">Phrase Libraryから配置</span>
+      <div id="S5_LIBRARY_BTNS" style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px;">
+        <span style="font-family:'Space Mono',monospace;font-size:7px;color:var(--mt)">← STEP04でフレーズを設計・同期するとここにボタンが表示されます</span>
+      </div>
+    </div>
+    <!-- クイック追加（後方互換） -->
+    <div class="fold" style="margin-bottom:8px;">
+      <div class="fold-toggle" id="QUICK_ADD_FOLD" onclick="toggleQuickAdd()">
+        <span class="fold-toggle-label" style="color:var(--mt)">クイック追加（従来方式）</span>
+        <span class="fold-toggle-arrow">▼</span>
+      </div>
+      <div class="fold-body" id="QUICK_ADD_BODY">
+        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;padding-top:6px;">
+          <button class="pb" style="border-color:#666;color:#aaa" onclick="addPart('INTRO',4)">＋ INTRO</button>
+          <button class="pb" style="border-color:#47ffe8;color:#47ffe8" onclick="addPart('A',8)">＋ Aメロ</button>
+          <button class="pb" style="border-color:#b3f7b3;color:#b3f7b3" onclick="addPart('PRE',4)">＋ プレコーラス</button>
+          <button class="pb" style="border-color:#e8ff47;color:#e8ff47" onclick="addPart('B',4)">＋ Bメロ</button>
+          <button class="pb" style="border-color:#ff4787;color:#ff4787" onclick="addPart('CHORUS',8)">＋ サビ</button>
+          <button class="pb" style="border-color:#47b3ff;color:#47b3ff" onclick="addPart('INTER',4)">＋ INTER(間奏)</button>
+          <button class="pb" style="border-color:#a78bfa;color:#a78bfa" onclick="addPart('BRIDGE',4)">＋ BRIDGE</button>
+          <button class="pb" style="border-color:#666;color:#aaa" onclick="addPart('OUTRO',4)">＋ OUTRO</button>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <span style="font-family:'Space Mono',monospace;font-size:8px;color:var(--mt)">各パーツ小節数:</span>
+          <select id="PBARS" style="width:65px;font-size:10px;padding:4px"><option value="1">1</option><option value="2">2</option><option value="4" selected>4</option><option value="8">8</option></select>
+        </div>
+      </div>
+    </div>
+    <!-- 配置済みシーケンス -->
+    <span class="lbl">配置シーケンス</span>
+    <div class="sq" id="SEQ"><div class="se">← パーツを追加</div></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;margin-top:4px;">
+      <button class="pb" onclick="clearStruct()">クリア</button>
+      <button class="pb" onclick="presetStruct('jpop')">Jポップ</button>
+      <button class="pb" onclick="presetStruct('folk')">フォーク</button>
+      <button class="pb" onclick="presetStruct('tiktok')">TikTok</button>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <span class="lbl" style="margin:0">終わり方:</span>
+      <button class="mb on" data-end="fade" onclick="selEnd(this)" style="padding:5px 8px">フェードアウト</button>
+      <button class="mb" data-end="res" onclick="selEnd(this)" style="padding:5px 8px">ルート解決</button>
+      <button class="mb" data-end="hold" onclick="selEnd(this)" style="padding:5px 8px">長音終止</button>
+    </div>
+  </div>
+</div>
+
+<!-- STEP6 楽器 -->
+<div class="step" id="s6">
+  <div class="step-header" onclick="toggleStep('s6')">
+    <div class="step-num">06</div><div><div class="step-title">楽器 & スタイル</div><div class="step-sub">基本5パターン × 4アーティキュレーション / 高度設定</div></div><span class="step-arrow">▼</span>
+  </div>
+  <div class="step-body">
+    <div style="font-family:'Space Mono',monospace;font-size:7px;color:var(--mt);margin-bottom:8px;line-height:1.7">
+      ★ <span style="color:var(--ac5)">MAIN</span>タブで全パート共通の楽器設定。各パーツのタブで「個別設定」をONにすると上書き可能。
+    </div>
+    <div class="part-tabs" id="PART_TABS"></div>
+    <div id="PART_PANELS"></div>
+    <div style="font-family:'Space Mono',monospace;font-size:8px;color:var(--mt);margin-top:8px">※ STEP5でパートを追加するとタブが増えます</div>
+  </div>
+</div>
+
+<div class="viz" id="VIZ"><div class="vb" id="VBARS"></div><div class="vp" id="VPH">— GENERATE TO PREVIEW —</div></div>
+<div class="gr">
+  <button class="brn" onclick="randAll()">🎲</button>
+  <button class="bg-gen" id="GBTN" onclick="doGen()"><span id="GICO">▶</span><span id="GTXT">GENERATE</span></button>
+</div>
+<div class="op" id="OPANEL">
+  <div class="oh">
+    <div class="ot">✓ MIDI READY</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+      <a class="dl" id="DLLINK" href="#" download="melody.mid">↓ DOWNLOAD MIDI</a>
+      <button class="dl" style="background:var(--ac4);border:none;cursor:pointer" onclick="generateSunoPrompt()">🎵 プロンプト出力</button>
+    </div>
+  </div>
+  <div class="roll"><canvas id="RC"></canvas></div>
+  <div class="bdg" id="BDGS"></div>
+</div>
+
+<!-- ★ SUNO MUSIC STYLE PROMPT（折りたたみ・プロンプト出力ボタンで自動展開） -->
+<div class="fold" id="STYLE_PROMPT_WRAP" style="margin-top:10px;">
+  <div class="fold-toggle" id="STYLE_FOLD" onclick="toggleFold('STYLE_FOLD','STYLE_BODY')">
+    <span class="fold-toggle-label">🎵 SUNO MUSIC STYLE PROMPT</span>
+    <span class="fold-toggle-arrow">▼</span>
+  </div>
+  <div class="fold-body" id="STYLE_BODY">
+    <div style="margin-top:8px;">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:6px;">
+        <button class="pb" onclick="copySunoPrompt()">📋 COPY</button>
+      </div>
+      <textarea id="SUNO_PROMPT_TEXT" readonly placeholder="「🎵 プロンプト出力」ボタンを押すとここに生成されます。"
+        style="width:100%;min-height:110px;background:var(--bg);border:1px solid var(--bd);color:var(--tx);
+        font-family:'Space Mono',monospace;font-size:11px;line-height:1.6;padding:10px;border-radius:2px;resize:vertical;"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- ★ SONG JSON（曲設計データ・折りたたんだまま。手動で開く） -->
+<div class="fold" style="margin-top:6px;">
+  <div class="fold-toggle" id="SONGJSON_FOLD" onclick="toggleSongJsonFold()">
+    <span class="fold-toggle-label" style="color:var(--mt)">📄 SONG JSON（曲設計データ）</span>
+    <span class="fold-toggle-arrow">▼</span>
+  </div>
+  <div class="fold-body" id="SONGJSON_BODY">
+    <div style="margin-top:8px;">
+      <div style="display:flex;justify-content:flex-end;gap:6px;margin-bottom:6px;">
+        <button class="pb" onclick="copySongJson()">📋 COPY</button>
+        <button class="pb" onclick="downloadSongJson()">↓ DOWNLOAD .json</button>
+      </div>
+      <textarea id="SONG_JSON_TEXT" readonly placeholder="このセクションを開くと現在の曲設計がJSONとして表示されます。"
+        style="width:100%;min-height:160px;background:var(--bg);border:1px solid var(--bd);color:var(--mt);
+        font-family:'Space Mono',monospace;font-size:10px;line-height:1.5;padding:10px;border-radius:2px;resize:vertical;"></textarea>
+    </div>
+  </div>
+</div>
+</div>
+
+<script src="app.js"></script>
+<script src="prompt-dictionary.js"></script>
+<script src="prompt-compiler.js"></script>
+<script src="lyrics-dictionary.js"></script>
+<script src="lyrics-compiler.js"></script>
+<!-- ★ プラグイン読み込み（順序がトラック出力順に影響: Lead→Piano→Strings→Bass→Drums）
+     新しい楽器を追加する場合は plugins/ に *.js を置き、ここに <script> 行を1つ追加するだけでよい。
+     UI(楽器タブ)は registerInstrument() の登録内容から自動生成されるため、index.html や app.js の
+     他の場所を書き換える必要はない。 -->
+<script src="plugins/lead.js"></script>
+<script src="plugins/piano.js"></script>
+<script src="plugins/strings.js"></script>
+<script src="plugins/bass.js"></script>
+<script src="plugins/drums.js"></script>
+<script>
+// 全プラグイン読み込み完了後にアプリを初期化する
+initApp();
+</script>
