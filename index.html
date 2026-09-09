@@ -344,20 +344,15 @@ canvas{width:100%;height:100%;}
     <div class="step-num">02</div><div><div class="step-title">雰囲気 / MOOD</div><div class="step-sub">プリセット + 6軸 + 音符長の割合 + Global Motif</div></div><span class="step-arrow">▼</span>
   </div>
   <div class="step-body">
-    <div class="mood-grid" id="MOOD_BTNS">
-      <button class="mood-btn on" data-mood="folk" onclick="selMood(this)"><span class="mn">🌿 フォーク</span><span class="ms">穏やか</span></button>
-      <button class="mood-btn" data-mood="pop" onclick="selMood(this)"><span class="mn">✨ ポップ</span><span class="ms">明るい</span></button>
-      <button class="mood-btn" data-mood="jazz" onclick="selMood(this)"><span class="mn">🎷 ジャズ</span><span class="ms">洗練</span></button>
-      <button class="mood-btn" data-mood="epic" onclick="selMood(this)"><span class="mn">⚡ エピック</span><span class="ms">壮大</span></button>
-      <button class="mood-btn" data-mood="sad" onclick="selMood(this)"><span class="mn">🌧 悲しい</span><span class="ms">内省</span></button>
-      <button class="mood-btn" data-mood="happy" onclick="selMood(this)"><span class="mn">☀️ 明るい</span><span class="ms">ポジティブ</span></button>
-      <button class="mood-btn" data-mood="cinematic" onclick="selMood(this)"><span class="mn">🎬 シネマ</span><span class="ms">映画的</span></button>
-      <button class="mood-btn" data-mood="lofi" onclick="selMood(this)"><span class="mn">📻 Lo-Fi</span><span class="ms">チル</span></button>
-      <button class="mood-btn" data-mood="dark" onclick="selMood(this)"><span class="mn">🌑 ダーク</span><span class="ms">緊張</span></button>
-      <button class="mood-btn" data-mood="romantic" onclick="selMood(this)"><span class="mn">💕 ロマンチック</span><span class="ms">甘い</span></button>
-      <button class="mood-btn" data-mood="tense" onclick="selMood(this)"><span class="mn">⚔️ テンション</span><span class="ms">緊迫</span></button>
-      <button class="mood-btn" data-mood="playful" onclick="selMood(this)"><span class="mn">🎮 プレイフル</span><span class="ms">軽快</span></button>
-    </div>
+    <div style="font-family:'Space Mono',monospace;font-size:8px;color:var(--ac);letter-spacing:2px;margin-bottom:5px">GENRE</div>
+    <div class="mood-grid" id="GENRE_BTNS"></div>
+    <div style="font-family:'Space Mono',monospace;font-size:8px;color:var(--ac2);letter-spacing:2px;margin:8px 0 5px">SUB GENRE</div>
+    <div class="mood-grid" id="SUBGENRE_BTNS"></div>
+    <div style="font-family:'Space Mono',monospace;font-size:8px;color:var(--ac3);letter-spacing:2px;margin:8px 0 5px">MOOD</div>
+    <div class="mood-grid" id="MOODTAG_BTNS"></div>
+    <div style="font-family:'Space Mono',monospace;font-size:8px;color:var(--ac4);letter-spacing:2px;margin:8px 0 5px">CHARACTER（複数選択可）</div>
+    <div class="mood-grid" id="CHARACTER_BTNS"></div>
+    <div id="MOOD_SUMMARY" style="font-family:'Space Mono',monospace;font-size:10px;color:var(--tx);margin-top:8px;padding:6px 8px;background:var(--bg);border:1px solid var(--bd);border-radius:3px;"></div>
     <div class="mood-params">
       <div class="mp-row"><div class="mp-label">音域中心 <span id="PCV">0.50</span></div><input type="range" id="PC" min="0" max="100" value="50" step="5" oninput="setMPDisp('PCV',this.value)" style="accent-color:var(--ac2)"><div class="mp-hint">0.0=低音域　1.0=高音域</div></div>
       <div class="mp-row"><div class="mp-label">跳躍確率 <span id="LPV">0.30</span></div><input type="range" id="LP" min="0" max="100" value="30" step="5" oninput="setMPDisp('LPV',this.value)" style="accent-color:var(--ac)"><div class="mp-hint">0.0=順次進行　1.0=跳躍</div></div>

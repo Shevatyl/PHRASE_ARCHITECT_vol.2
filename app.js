@@ -16,6 +16,202 @@ var CP_NAMES={major:['I','IIm','IV','V','VIm'],p1564:['I','V','VIm','IV'],p4536:
 var DEG_MAP={'I':[0,4,7],'IIm':[2,5,9],'IIIm':[4,7,11],'IV':[5,9,0],'V':[7,11,2],'VIm':[9,0,4],'VIIm':[11,2,5],'I7':[0,4,7,10],'IIm7':[2,5,9,0],'IV7':[5,9,0,3],'V7':[7,11,2,5],'Imaj7':[0,4,7,11],'bVII':[10,2,5],'bIII':[3,7,10],'IVm':[5,8,0]};
 var ALL_DEGREES=Object.keys(DEG_MAP);
 var MOODS={folk:{pc:.50,lp:.20,rr:.35,vr:.15,ar:0.0,cd:.60,ts:'4/4',nb:[1,1,3,3,0,1,0,0,1,0,0],struct:'folk',end:'fade'},pop:{pc:.55,lp:.35,rr:.30,vr:.25,ar:.2,cd:.50,ts:'4/4',nb:[1,1,3,4,1,1,0,0,1,0,0],struct:'jpop',end:'fade'},jazz:{pc:.55,lp:.40,rr:.20,vr:.50,ar:0.0,cd:.90,ts:'4/4',nb:[0,0,2,3,2,1,0,0,2,1,0],struct:'folk',end:'res'},epic:{pc:.75,lp:.60,rr:.25,vr:.20,ar:.7,cd:.55,ts:'4/4',nb:[0,2,2,3,1,2,0,0,1,0,0],struct:'jpop',end:'hold'},sad:{pc:.40,lp:.15,rr:.50,vr:.10,ar:-.3,cd:.65,ts:'4/4',nb:[2,2,3,2,0,2,0,0,1,0,0],struct:'folk',end:'hold'},happy:{pc:.65,lp:.35,rr:.25,vr:.30,ar:.5,cd:.40,ts:'4/4',nb:[0,1,3,4,1,1,0,0,1,0,0],struct:'jpop',end:'fade'},cinematic:{pc:.65,lp:.50,rr:.40,vr:.20,ar:.4,cd:.70,ts:'4/4',nb:[2,2,2,2,0,2,0,0,1,0,0],struct:'jpop',end:'hold'},lofi:{pc:.45,lp:.20,rr:.45,vr:.30,ar:-.1,cd:.55,ts:'4/4',nb:[1,2,3,2,0,1,0,1,1,0,0],struct:'folk',end:'fade'},dark:{pc:.35,lp:.45,rr:.30,vr:.25,ar:-.5,cd:.75,ts:'4/4',nb:[1,2,2,2,1,1,0,0,1,0,0],struct:'folk',end:'hold'},romantic:{pc:.55,lp:.20,rr:.45,vr:.10,ar:.1,cd:.60,ts:'3/4',nb:[2,2,3,2,0,2,0,0,1,0,0],struct:'folk',end:'hold'},tense:{pc:.50,lp:.55,rr:.15,vr:.40,ar:.3,cd:.80,ts:'4/4',nb:[0,0,2,4,3,1,0,0,1,1,0],struct:'jpop',end:'res'},playful:{pc:.60,lp:.40,rr:.20,vr:.45,ar:.3,cd:.40,ts:'4/4',nb:[0,0,2,4,2,1,0,0,1,1,0],struct:'tiktok',end:'fade'}};
+// ══════════════════════════════════════════════
+// ★ MOOD SYSTEM v2 — Genre → SubGenre → Mood → Character
+// 既存 MOODS / selMood() は変更・削除しない（後方互換・ロールバック安全性のため温存）
+// ══════════════════════════════════════════════
+var MOOD_SYSTEM = {
+  genres: {
+    folk: { name:'Folk', subgenres: {
+      acoustic: { name:'Acoustic Folk', base:{pc:.50,lp:.20,ar:0.0,cd:.60,rr:.35,vr:.15,ts:'4/4',
+        nb:[1,1,3,3,0,1,0,0,1,0,0], struct:'folk', end:'fade'} }
+    }},
+    pop: { name:'Pop', subgenres: {
+      jpop: { name:'J-Pop', base:{pc:.55,lp:.35,ar:.2,cd:.50,rr:.30,vr:.25,ts:'4/4',
+        nb:[1,1,3,4,1,1,0,0,1,0,0], struct:'jpop', end:'fade'} }
+    }},
+    jazz: { name:'Jazz', subgenres: {
+      jazzpop: { name:'Jazz Pop', base:{pc:.55,lp:.40,ar:0.0,cd:.90,rr:.20,vr:.50,ts:'4/4',
+        nb:[0,0,2,3,2,1,0,0,2,1,0], struct:'folk', end:'res'} }
+    }},
+    cinematic: { name:'Cinematic', subgenres: {
+      epic:  { name:'Epic',  base:{pc:.75,lp:.60,ar:.7,cd:.55,rr:.25,vr:.20,ts:'4/4',
+        nb:[0,2,2,3,1,2,0,0,1,0,0], struct:'jpop', end:'hold'} },
+      score: { name:'Score', base:{pc:.65,lp:.50,ar:.4,cd:.70,rr:.40,vr:.20,ts:'4/4',
+        nb:[2,2,2,2,0,2,0,0,1,0,0], struct:'jpop', end:'hold'} }
+    }},
+    lofi: { name:'Lo-Fi', subgenres: {
+      chill: { name:'Lo-Fi Chill', base:{pc:.45,lp:.20,ar:-.1,cd:.55,rr:.45,vr:.30,ts:'4/4',
+        nb:[1,2,3,2,0,1,0,1,1,0,0], struct:'folk', end:'fade'} }
+    }}
+  },
+
+  // Mood: pc/lp/ar/cd/vr/end のみ担当（既存sad/happy/dark/romantic/tenseを移行 + bright新設）
+  moods: {
+    neutral:  { name:'（指定なし）', mod:{} },
+    bright:   { name:'Bright',   mod:{pc:+.10, lp:+.05, ar:+.20, cd:-.05, vr:0,    end:'fade'} },
+    happy:    { name:'Happy',    mod:{pc:+.15, lp:+.10, ar:+.50, cd:-.15, vr:+.10, end:'fade'} },
+    sad:      { name:'Sad',      mod:{pc:-.10, lp:-.10, ar:-.30, cd:+.10, vr:-.10, end:'hold'} },
+    dark:     { name:'Dark',     mod:{pc:-.15, lp:+.20, ar:-.50, cd:+.20, vr:+.05, end:'hold'} },
+    // ★ ts='3/4'固定は廃止。SubGenre側が拍子の決定権を持つ（suggestedTsは参考情報のみ、自動適用しない）
+    romantic: { name:'Romantic', mod:{pc:+.05, lp:-.05, ar:+.10, cd:+.05, vr:-.10, end:'hold'}, suggestedTs:'3/4' },
+    tense:    { name:'Tense',    mod:{pc:0,    lp:+.30, ar:+.30, cd:+.25, vr:+.20, end:'res'} }
+  },
+
+  // Character: rr/vr/nb/lp/ar のみ担当・複数選択可（playfulを正式移行、rhythmicを新設）
+  characters: {
+    rhythmic: { name:'Rhythmic', mod:{rr:+.15, vr:+.05, nbDelta:[0,-1,0,1,1,0,0,0,0,0,0]} },
+    playful:  { name:'Playful',  mod:{rr:-.15, vr:+.25, lp:+.15, ar:+.30,
+                nbDelta:[-1,-1,-1,1,2,0,0,0,0,1,0]} }
+  }
+};
+
+var curGenre='folk', curSubGenre='acoustic', curMoodTag='neutral', curCharacters=[];
+
+// 0-1レンジのパラメータに対する「残り代」ベースの正規化加算（上限/下限への張り付きを防ぐ）
+function _msResidual(base, delta){
+  if(!delta) return base;
+  return delta>=0 ? base + delta*(1-base) : base + delta*base;
+}
+function _msClampAR(v){ return Math.max(-1, Math.min(1, v)); }
+
+// SubGenre Base → Mood Modifier → Character Modifier の順で適用し、最終パラメータを算出
+function resolveMoodParams(genreId, subId, moodId, characterIds){
+  var g = MOOD_SYSTEM.genres[genreId] || MOOD_SYSTEM.genres.folk;
+  var sgKey = (g.subgenres[subId]) ? subId : Object.keys(g.subgenres)[0];
+  var sg = g.subgenres[sgKey];
+  var b = sg.base;
+  var mood = MOOD_SYSTEM.moods[moodId] || MOOD_SYSTEM.moods.neutral;
+  var mm = mood.mod || {};
+
+  var out = {
+    pc: _msResidual(b.pc, mm.pc||0),
+    lp: _msResidual(b.lp, mm.lp||0),
+    ar: _msClampAR(b.ar + (mm.ar||0)),
+    cd: _msResidual(b.cd, mm.cd||0),
+    rr: b.rr,
+    vr: _msResidual(b.vr, mm.vr||0),
+    ts: b.ts, // SubGenreが決定権を持つ。Moodは変更しない
+    nb: b.nb.slice(),
+    struct: b.struct,
+    end: mm.end || b.end
+  };
+
+  (characterIds||[]).forEach(function(cid){
+    var ch = MOOD_SYSTEM.characters[cid]; if(!ch) return;
+    var m = ch.mod || {};
+    if(m.rr!==undefined) out.rr = _msResidual(out.rr, m.rr);
+    if(m.vr!==undefined) out.vr = _msResidual(out.vr, m.vr);
+    if(m.lp!==undefined) out.lp = _msResidual(out.lp, m.lp);
+    if(m.ar!==undefined) out.ar = _msClampAR(out.ar + m.ar);
+    if(m.nbDelta) out.nb = out.nb.map(function(v,i){ return Math.max(0, Math.min(5, v+(m.nbDelta[i]||0))); });
+  });
+
+  return out;
+}
+
+// 旧Prompt Dictionary(PROMPT_DICTIONARY.mood.presets)は folk/pop/jazz/epic/sad/happy/cinematic/
+// lofi/dark/romantic/tense/playful の単一キーを前提としているため、後方互換用に近似キーを合成する。
+// Moodが指定されていればMood語彙を優先、なければSubGenreの旧名にフォールバック。
+var _MS_LEGACY_SUBGENRE_KEY = { acoustic:'folk', jpop:'pop', jazzpop:'jazz', epic:'epic', score:'cinematic', chill:'lofi' };
+function _msLegacyPresetKey(){
+  if(curMoodTag && curMoodTag!=='neutral' && MOOD_SYSTEM.moods[curMoodTag]) return curMoodTag;
+  if(curCharacters.indexOf('playful')>=0) return 'playful';
+  return _MS_LEGACY_SUBGENRE_KEY[curSubGenre] || 'folk';
+}
+
+// 選択結果を実際のスライダー/UIへ書き込む（selMood()と同じ適用先。既存スライダーは削除しない）
+function applyMoodSystem(){
+  var params = resolveMoodParams(curGenre, curSubGenre, curMoodTag, curCharacters);
+  curMood = _msLegacyPresetKey(); // 旧変数を維持（バッジ表示・Prompt Dictionary参照用）
+
+  [['PC','PCV',params.pc],['LP','LPV',params.lp],['CD','CDV',params.cd]].forEach(function(x){
+    var e=document.getElementById(x[0]); if(e) e.value=Math.round(x[2]*100);
+    var v=document.getElementById(x[1]); if(v) v.textContent=x[2].toFixed(2);
+  });
+  var rrE=document.getElementById('RR'); if(rrE){ rrE.value=Math.round(params.rr*100); }
+  var vrE=document.getElementById('VR'); if(vrE){ vrE.value=Math.round(params.vr*100); document.getElementById('VRV').textContent=params.vr.toFixed(2); }
+  document.getElementById('AR').value=Math.round(params.ar*100);
+  document.getElementById('ARV').textContent=params.ar.toFixed(1);
+  for(var i=0;i<11;i++){
+    var ew=document.getElementById('NW'+i), vw=document.getElementById('NV'+i);
+    if(ew&&vw){ ew.value=params.nb[i]; vw.textContent=params.nb[i]; }
+  }
+  var tb=document.querySelector('[data-ts="'+params.ts+'"]'); if(tb) selTS(tb);
+  var eb=document.querySelector('[data-end="'+params.end+'"]'); if(eb) selEnd(eb);
+  if(struct.length===0) presetStruct(params.struct||'folk');
+  syncFIVarRate();
+  renderMoodSummary();
+}
+
+function renderMoodSummary(){
+  var el=document.getElementById('MOOD_SUMMARY'); if(!el) return;
+  var g=MOOD_SYSTEM.genres[curGenre], sg=g&&g.subgenres[curSubGenre];
+  var moodName = MOOD_SYSTEM.moods[curMoodTag] ? MOOD_SYSTEM.moods[curMoodTag].name : '';
+  var chars = curCharacters.map(function(c){return MOOD_SYSTEM.characters[c]?MOOD_SYSTEM.characters[c].name:c;});
+  var parts=[g?g.name:'', sg?sg.name:'', (curMoodTag!=='neutral'?moodName:'')].filter(Boolean);
+  var line=parts.join(' / ')+(chars.length?(' / '+chars.join('+')):'');
+  el.textContent=line;
+}
+
+function selGenre(genreId){
+  curGenre=genreId;
+  var g=MOOD_SYSTEM.genres[genreId];
+  curSubGenre=Object.keys(g.subgenres)[0];
+  buildSubGenreUI(); applyMoodSystem(); buildMoodSystemUIState();
+}
+function selSubGenre(subId){ curSubGenre=subId; applyMoodSystem(); buildMoodSystemUIState(); }
+function selMoodTag(moodId){ curMoodTag=moodId; applyMoodSystem(); buildMoodSystemUIState(); }
+function toggleCharacter(charId){
+  var idx=curCharacters.indexOf(charId);
+  if(idx>=0) curCharacters.splice(idx,1); else curCharacters.push(charId);
+  applyMoodSystem(); buildMoodSystemUIState();
+}
+
+function buildGenreUI(){
+  var cont=document.getElementById('GENRE_BTNS'); if(!cont) return;
+  cont.innerHTML='';
+  Object.keys(MOOD_SYSTEM.genres).forEach(function(gid){
+    var btn=document.createElement('button'); btn.className='mood-btn'+(gid===curGenre?' on':'');
+    btn.innerHTML='<span class="mn">'+MOOD_SYSTEM.genres[gid].name+'</span>';
+    btn.onclick=function(){ selGenre(gid); };
+    cont.appendChild(btn);
+  });
+}
+function buildSubGenreUI(){
+  var cont=document.getElementById('SUBGENRE_BTNS'); if(!cont) return;
+  cont.innerHTML='';
+  var g=MOOD_SYSTEM.genres[curGenre];
+  Object.keys(g.subgenres).forEach(function(sid){
+    var btn=document.createElement('button'); btn.className='mood-btn'+(sid===curSubGenre?' on':'');
+    btn.innerHTML='<span class="mn">'+g.subgenres[sid].name+'</span>';
+    btn.onclick=function(){ selSubGenre(sid); };
+    cont.appendChild(btn);
+  });
+}
+function buildMoodTagUI(){
+  var cont=document.getElementById('MOODTAG_BTNS'); if(!cont) return;
+  cont.innerHTML='';
+  Object.keys(MOOD_SYSTEM.moods).forEach(function(mid){
+    var btn=document.createElement('button'); btn.className='mood-btn'+(mid===curMoodTag?' on':'');
+    btn.innerHTML='<span class="mn">'+MOOD_SYSTEM.moods[mid].name+'</span>';
+    btn.onclick=function(){ selMoodTag(mid); };
+    cont.appendChild(btn);
+  });
+}
+function buildCharacterUI(){
+  var cont=document.getElementById('CHARACTER_BTNS'); if(!cont) return;
+  cont.innerHTML='';
+  Object.keys(MOOD_SYSTEM.characters).forEach(function(cid){
+    var btn=document.createElement('button'); btn.className='mood-btn'+(curCharacters.indexOf(cid)>=0?' on':'');
+    btn.innerHTML='<span class="mn">'+MOOD_SYSTEM.characters[cid].name+'</span>';
+    btn.onclick=function(){ toggleCharacter(cid); };
+    cont.appendChild(btn);
+  });
+}
+function buildMoodSystemUIState(){ buildGenreUI(); buildSubGenreUI(); buildMoodTagUI(); buildCharacterUI(); }
+function buildMoodSystemUI(){ buildMoodSystemUIState(); applyMoodSystem(); }
+
 var PCOL={INTRO:'#666',A:'#47ffe8',PRE:'#b3f7b3',B:'#e8ff47',CHORUS:'#ff4787',INTER:'#47b3ff',BRIDGE:'#a78bfa',OUTRO:'#666'};
 var PLBL={INTRO:'INTRO',A:'Aメロ',PRE:'プレコーラス',B:'Bメロ',CHORUS:'CHORUS',INTER:'INTER(間奏)',BRIDGE:'BRIDGE',OUTRO:'OUTRO'};
 var ALL_PARTS=['INTRO','A','PRE','B','CHORUS','INTER','BRIDGE','OUTRO'];
@@ -1815,7 +2011,7 @@ function doGen(){
 // UIが構築される。生成アルゴリズム・UI・設定値は元のv8.0.5から一切変更していない。
 function initApp(){
   buildInstDefsFromPlugins();
-  initViz();buildPartChordGrid();presetStruct('folk');selMood(document.querySelector('[data-mood="folk"]'));updateCPPreview();
+  initViz();buildPartChordGrid();presetStruct('folk');buildMoodSystemUI();updateCPPreview();
   buildPPDGrid();
   buildFIGrid(); // Legacy Inherit 後方互換
   renderPhraseLibrary();
@@ -1906,6 +2102,10 @@ function collectSongState(){
     },
 
     mood:{
+      genre:curGenre,
+      subGenre:curSubGenre,
+      mood:curMoodTag,
+      characters:curCharacters.slice(),
       preset:curMood,
       params:{
         pitchCenter:getMPV('PC'),
