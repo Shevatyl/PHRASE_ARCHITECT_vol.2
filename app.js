@@ -43,6 +43,74 @@ var MOOD_SYSTEM = {
     lofi: { name:'Lo-Fi', subgenres: {
       chill: { name:'Lo-Fi Chill', base:{pc:.45,lp:.20,ar:-.1,cd:.55,rr:.45,vr:.30,ts:'4/4',
         nb:[1,2,3,2,0,1,0,1,1,0,0], struct:'folk', end:'fade'} }
+    }},
+
+    // ★ v9.0 追加10ジャンル（既存folk/pop/jazz/cinematic/lofiは変更なし）
+    citypop: { name:'City Pop', subgenres: {
+      eighties: { name:'80s City Pop', base:{pc:.60,lp:.30,ar:.15,cd:.60,rr:.30,vr:.25,ts:'4/4',
+        nb:[0,1,3,4,2,1,0,0,1,1,0], struct:'jpop', end:'fade'} },
+      funk: { name:'Funk City Pop', base:{pc:.55,lp:.35,ar:.10,cd:.70,rr:.25,vr:.35,ts:'4/4',
+        nb:[0,0,2,4,3,1,0,0,1,1,0], struct:'jpop', end:'fade'} }
+    }},
+    vocaloidpop: { name:'Vocaloid Pop', subgenres: {
+      denpa: { name:'Denpa', base:{pc:.75,lp:.55,ar:.40,cd:.35,rr:.20,vr:.50,ts:'4/4',
+        nb:[0,0,1,4,4,1,0,0,0,1,1], struct:'tiktok', end:'fade'} },
+      kawaiibass: { name:'Kawaii Future Bass', base:{pc:.65,lp:.45,ar:.35,cd:.45,rr:.25,vr:.40,ts:'4/4',
+        nb:[0,0,1,3,5,1,0,0,0,1,1], struct:'jpop', end:'fade'} }
+    }},
+    electropop: { name:'Electropop', subgenres: {
+      synthpop: { name:'Synthpop', base:{pc:.60,lp:.30,ar:.20,cd:.50,rr:.35,vr:.25,ts:'4/4',
+        nb:[0,1,3,3,2,1,0,0,1,1,0], struct:'jpop', end:'fade'} },
+      futurebass: { name:'Future Bass', base:{pc:.60,lp:.40,ar:.30,cd:.40,rr:.25,vr:.35,ts:'4/4',
+        nb:[0,0,2,3,4,1,0,0,0,1,1], struct:'jpop', end:'fade'} }
+    }},
+    rock: { name:'Rock', subgenres: {
+      alt: { name:'Alt Rock', base:{pc:.55,lp:.35,ar:.15,cd:.55,rr:.30,vr:.25,ts:'4/4',
+        nb:[0,1,3,3,1,1,0,0,1,0,0], struct:'jpop', end:'res'} },
+      punk: { name:'Punk Rock', base:{pc:.55,lp:.45,ar:.20,cd:.45,rr:.20,vr:.35,ts:'4/4',
+        nb:[0,0,3,4,1,1,0,0,1,1,0], struct:'tiktok', end:'res'} },
+      arena: { name:'Arena Rock', base:{pc:.65,lp:.40,ar:.45,cd:.55,rr:.30,vr:.20,ts:'4/4',
+        nb:[0,1,3,3,1,2,0,0,1,0,0], struct:'jpop', end:'hold'} }
+    }},
+    rnb: { name:'R&B', subgenres: {
+      neosoul: { name:'Neo Soul', base:{pc:.50,lp:.25,ar:.05,cd:.75,rr:.35,vr:.35,ts:'4/4',
+        nb:[0,1,2,3,2,2,0,0,1,1,0], struct:'folk', end:'hold'} },
+      contemporary: { name:'Contemporary R&B', base:{pc:.55,lp:.30,ar:.10,cd:.65,rr:.35,vr:.30,ts:'4/4',
+        nb:[0,1,2,4,2,1,0,0,1,1,0], struct:'jpop', end:'fade'} }
+    }},
+    edm: { name:'EDM', subgenres: {
+      proghouse: { name:'Progressive House', base:{pc:.55,lp:.30,ar:.25,cd:.45,rr:.40,vr:.20,ts:'4/4',
+        nb:[0,0,2,3,4,0,0,0,0,1,1], struct:'jpop', end:'fade'} },
+      dnb: { name:'Drum & Bass', base:{pc:.55,lp:.40,ar:.20,cd:.35,rr:.30,vr:.30,ts:'4/4',
+        nb:[0,0,1,2,5,0,0,0,0,1,2], struct:'tiktok', end:'fade'} },
+      synthwave: { name:'Synthwave', base:{pc:.50,lp:.25,ar:.10,cd:.50,rr:.40,vr:.20,ts:'4/4',
+        nb:[0,1,3,3,2,1,0,0,1,0,0], struct:'jpop', end:'hold'} }
+    }},
+    orchestral: { name:'Orchestral', subgenres: {
+      neoclassical: { name:'Neoclassical', base:{pc:.55,lp:.20,ar:.10,cd:.65,rr:.25,vr:.25,ts:'4/4',
+        nb:[1,2,2,2,0,2,0,0,1,0,0], struct:'folk', end:'hold'} },
+      symphonic: { name:'Symphonic', base:{pc:.70,lp:.45,ar:.35,cd:.60,rr:.25,vr:.20,ts:'4/4',
+        nb:[0,2,2,3,1,2,0,0,1,0,0], struct:'jpop', end:'hold'} }
+    }},
+    atmospheric: { name:'Dark / Atmospheric', subgenres: {
+      darkambient: { name:'Dark Ambient', base:{pc:.30,lp:.15,ar:-.30,cd:.60,rr:.30,vr:.20,ts:'4/4',
+        nb:[2,2,2,1,0,1,0,1,1,0,0], struct:'folk', end:'hold'} },
+      industrial: { name:'Industrial', base:{pc:.35,lp:.35,ar:-.20,cd:.45,rr:.25,vr:.30,ts:'4/4',
+        nb:[0,1,2,3,3,1,0,0,1,1,0], struct:'jpop', end:'hold'} },
+      gothic: { name:'Gothic', base:{pc:.35,lp:.30,ar:-.35,cd:.65,rr:.30,vr:.25,ts:'4/4',
+        nb:[1,2,2,2,1,1,0,0,1,0,0], struct:'folk', end:'hold'} }
+    }},
+    ballad: { name:'Ballad', subgenres: {
+      piano: { name:'Piano Ballad', base:{pc:.45,lp:.15,ar:.05,cd:.65,rr:.40,vr:.15,ts:'4/4',
+        nb:[2,2,2,1,0,2,0,0,1,0,0], struct:'folk', end:'hold'} },
+      strings: { name:'String Ballad', base:{pc:.50,lp:.15,ar:.10,cd:.70,rr:.35,vr:.15,ts:'4/4',
+        nb:[1,2,3,1,0,2,0,0,1,0,0], struct:'folk', end:'hold'} }
+    }},
+    epic: { name:'Epic', subgenres: {
+      trailer: { name:'Hybrid Trailer', base:{pc:.70,lp:.55,ar:.50,cd:.50,rr:.25,vr:.20,ts:'4/4',
+        nb:[0,1,2,3,2,2,0,0,1,0,0], struct:'jpop', end:'hold'} },
+      orchrock: { name:'Epic Orchestral Rock', base:{pc:.65,lp:.50,ar:.45,cd:.55,rr:.25,vr:.25,ts:'4/4',
+        nb:[0,1,3,3,1,2,0,0,1,0,0], struct:'jpop', end:'hold'} }
     }}
   },
 
@@ -55,14 +123,41 @@ var MOOD_SYSTEM = {
     dark:     { name:'Dark',     mod:{pc:-.15, lp:+.20, ar:-.50, cd:+.20, vr:+.05, end:'hold'} },
     // ★ ts='3/4'固定は廃止。SubGenre側が拍子の決定権を持つ（suggestedTsは参考情報のみ、自動適用しない）
     romantic: { name:'Romantic', mod:{pc:+.05, lp:-.05, ar:+.10, cd:+.05, vr:-.10, end:'hold'}, suggestedTs:'3/4' },
-    tense:    { name:'Tense',    mod:{pc:0,    lp:+.30, ar:+.30, cd:+.25, vr:+.20, end:'res'} }
+    tense:    { name:'Tense',    mod:{pc:0,    lp:+.30, ar:+.30, cd:+.25, vr:+.20, end:'res'} },
+
+    // ★ v9.0 追加13種（既存neutral/bright/happy/sad/dark/romantic/tenseは変更なし）
+    nostalgic:   { name:'Nostalgic',   mod:{pc:-.05, lp:-.05, ar:-.10, cd:+.05, vr:-.05, end:'fade'} },
+    bittersweet: { name:'Bittersweet', mod:{pc:-.05, lp:+.05, ar:-.15, cd:+.10, vr:+.05, end:'hold'} },
+    triumphant:  { name:'Triumphant',  mod:{pc:+.20, lp:+.15, ar:+.60, cd:-.10, vr:+.05, end:'hold'} },
+    ethereal:    { name:'Ethereal',    mod:{pc:+.15, lp:-.10, ar:+.05, cd:-.20, vr:-.05, end:'fade'} },
+    dreamy:      { name:'Dreamy',      mod:{pc:+.10, lp:-.10, ar:+.10, cd:-.15, vr:-.10, end:'fade'} },
+    melancholic: { name:'Melancholic', mod:{pc:-.10, lp:-.05, ar:-.25, cd:+.05, vr:-.05, end:'hold'} },
+    aggressive:  { name:'Aggressive',  mod:{pc:+.05, lp:+.35, ar:+.20, cd:+.10, vr:+.15, end:'res'} },
+    cozy:        { name:'Cozy',        mod:{pc:-.05, lp:-.15, ar:0,    cd:0,    vr:-.15, end:'fade'} },
+    mysterious:  { name:'Mysterious',  mod:{pc:-.10, lp:+.15, ar:-.10, cd:+.15, vr:+.10, end:'hold'} },
+    suspenseful: { name:'Suspenseful', mod:{pc:0,    lp:+.25, ar:+.10, cd:+.20, vr:+.15, end:'res'} },
+    euphoric:    { name:'Euphoric',    mod:{pc:+.20, lp:+.20, ar:+.70, cd:-.20, vr:+.15, end:'fade'} },
+    uplifting:   { name:'Uplifting',   mod:{pc:+.15, lp:+.10, ar:+.40, cd:-.10, vr:+.05, end:'fade'} },
+    lonely:      { name:'Lonely',      mod:{pc:-.15, lp:-.15, ar:-.20, cd:+.05, vr:-.15, end:'hold'} }
   },
 
   // Character: rr/vr/nb/lp/ar のみ担当・複数選択可（playfulを正式移行、rhythmicを新設）
   characters: {
     rhythmic: { name:'Rhythmic', mod:{rr:+.15, vr:+.05, nbDelta:[0,-1,0,1,1,0,0,0,0,0,0]} },
     playful:  { name:'Playful',  mod:{rr:-.15, vr:+.25, lp:+.15, ar:+.30,
-                nbDelta:[-1,-1,-1,1,2,0,0,0,0,1,0]} }
+                nbDelta:[-1,-1,-1,1,2,0,0,0,0,1,0]} },
+
+    // ★ v9.0 追加8種（既存rhythmic/playfulは変更なし）
+    // sunoVocal: 数値パラメータには変換せず、SUNOプロンプトのボーカル描写語として
+    //            prompt-compiler.js側で任意に参照する追加プロパティ（数値解決には無関係）
+    breathy_female:     { name:'Breathy Female',      mod:{vr:+.05},              sunoVocal:'breathy female vocal' },
+    powerful_belting:   { name:'Powerful Belting',    mod:{rr:+.10, ar:+.20},     sunoVocal:'powerful belting vocal' },
+    soft_whisper:       { name:'Soft Whisper',        mod:{lp:-.10, vr:-.10},     sunoVocal:'soft whisper vocal' },
+    choir_harmonies:    { name:'Choir Harmonies',     mod:{rr:+.05},              sunoVocal:'layered choir harmonies' },
+    raspy_rock:         { name:'Raspy Rock',          mod:{lp:+.15, ar:+.15},     sunoVocal:'raspy rock vocal' },
+    cute_high_pitched:  { name:'Cute High-Pitched',   mod:{lp:+.10, vr:+.10},     sunoVocal:'cute high-pitched vocal' },
+    spoken_word_rap:    { name:'Spoken-Word / Rap',   mod:{rr:+.20, vr:+.20},     sunoVocal:'spoken-word rap delivery' },
+    operatic:           { name:'Operatic',            mod:{ar:+.15},              sunoVocal:'operatic vocal' }
   }
 };
 
@@ -113,7 +208,20 @@ function resolveMoodParams(genreId, subId, moodId, characterIds){
 // 旧Prompt Dictionary(PROMPT_DICTIONARY.mood.presets)は folk/pop/jazz/epic/sad/happy/cinematic/
 // lofi/dark/romantic/tense/playful の単一キーを前提としているため、後方互換用に近似キーを合成する。
 // Moodが指定されていればMood語彙を優先、なければSubGenreの旧名にフォールバック。
-var _MS_LEGACY_SUBGENRE_KEY = { acoustic:'folk', jpop:'pop', jazzpop:'jazz', epic:'epic', score:'cinematic', chill:'lofi' };
+var _MS_LEGACY_SUBGENRE_KEY = {
+  acoustic:'folk', jpop:'pop', jazzpop:'jazz', epic:'epic', score:'cinematic', chill:'lofi',
+  // ★ v9.0 追加10ジャンル分のサブジャンル→レガシーpresetキー マッピング
+  eighties:'citypop_eighties', funk:'citypop_funk',
+  denpa:'vocaloidpop_denpa', kawaiibass:'vocaloidpop_kawaiibass',
+  synthpop:'electropop_synthpop', futurebass:'electropop_futurebass',
+  alt:'rock_alt', punk:'rock_punk', arena:'rock_arena',
+  neosoul:'rnb_neosoul', contemporary:'rnb_contemporary',
+  proghouse:'edm_proghouse', dnb:'edm_dnb', synthwave:'edm_synthwave',
+  neoclassical:'orchestral_neoclassical', symphonic:'orchestral_symphonic',
+  darkambient:'atmospheric_darkambient', industrial:'atmospheric_industrial', gothic:'atmospheric_gothic',
+  piano:'ballad_piano', strings:'ballad_strings',
+  trailer:'epic_trailer', orchrock:'epic_orchrock'
+};
 function _msLegacyPresetKey(){
   if(curMoodTag && curMoodTag!=='neutral' && MOOD_SYSTEM.moods[curMoodTag]) return curMoodTag;
   if(curCharacters.indexOf('playful')>=0) return 'playful';

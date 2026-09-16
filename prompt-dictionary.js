@@ -21,7 +21,48 @@ window.PROMPT_DICTIONARY = {
       dark:      { genre:'dark atmospheric',       suno:'tense, dark atmospheric mood' },
       romantic:  { genre:'romantic ballad',        suno:'sweet, tender romantic ballad' },
       tense:     { genre:'tense dramatic',         suno:'suspenseful, tense dramatic energy' },
-      playful:   { genre:'playful upbeat',         suno:'light, playful, energetic feel' }
+      playful:   { genre:'playful upbeat',         suno:'light, playful, energetic feel' },
+
+      // ★ v9.0 追加: MOOD_SYSTEM v2 の新規MOOD（13種）+ bright（既存の抜け埋め）
+      bright:       { genre:'bright pop',            suno:'bright, optimistic, energetic feel' },
+      nostalgic:    { genre:'nostalgic pop',         suno:'wistfully nostalgic, warm-toned atmosphere' },
+      bittersweet:  { genre:'bittersweet ballad',    suno:'bittersweet, emotionally layered mood' },
+      triumphant:   { genre:'triumphant anthem',     suno:'triumphant, victorious, soaring energy' },
+      ethereal:     { genre:'ethereal atmosphere',   suno:'ethereal, airy, otherworldly texture' },
+      dreamy:       { genre:'dreamy pop',            suno:'dreamy, hazy, softly floating atmosphere' },
+      melancholic:  { genre:'melancholic mood',      suno:'melancholic, wistful, quietly sorrowful feel' },
+      aggressive:   { genre:'aggressive energy',     suno:'aggressive, driving, confrontational energy' },
+      cozy:         { genre:'cozy warmth',           suno:'cozy, warm, comforting intimacy' },
+      mysterious:   { genre:'mysterious atmosphere', suno:'mysterious, enigmatic, shadowy atmosphere' },
+      suspenseful:  { genre:'suspenseful tension',   suno:'suspenseful, on-edge, anticipatory tension' },
+      euphoric:     { genre:'euphoric high',         suno:'euphoric, exhilarating, blissed-out energy' },
+      uplifting:    { genre:'uplifting anthem',      suno:'uplifting, hopeful, inspiring energy' },
+      lonely:       { genre:'lonely isolation',      suno:'lonely, isolated, quietly aching feel' },
+
+      // ★ v9.0 追加: MOOD_SYSTEM v2 の新規10ジャンル×各サブジャンル（23種）
+      citypop_eighties:      { genre:'80s city pop',            suno:'nostalgic 80s Japanese city pop with glossy synths and funk-tinged bass' },
+      citypop_funk:          { genre:'funk city pop',           suno:'funk-driven city pop with tight rhythm guitar and slap bass' },
+      vocaloidpop_denpa:     { genre:'denpa song',              suno:'hyper-energetic denpa-style novelty pop with rapid-fire vocal melody' },
+      vocaloidpop_kawaiibass:{ genre:'kawaii future bass',      suno:'kawaii future bass with bright pitched vocal chops and bouncy synths' },
+      electropop_synthpop:  { genre:'synthpop',                 suno:'retro-leaning synthpop with punchy analog synth leads' },
+      electropop_futurebass:{ genre:'future bass',              suno:'modern future bass with supersaw chords and vocal-chop hooks' },
+      rock_alt:             { genre:'alternative rock',         suno:'alternative rock with driving guitars and dynamic verse-chorus contrast' },
+      rock_punk:             { genre:'punk rock',               suno:'raw, fast-paced punk rock energy' },
+      rock_arena:            { genre:'arena rock',              suno:'big, anthemic arena rock with soaring choruses' },
+      rnb_neosoul:           { genre:'neo soul',                suno:'neo soul with smooth chord extensions and laid-back groove' },
+      rnb_contemporary:      { genre:'contemporary R&B',        suno:'contemporary R&B with silky vocal-forward production' },
+      edm_proghouse:         { genre:'progressive house',       suno:'progressive house with building synth layers and euphoric drops' },
+      edm_dnb:               { genre:'drum and bass',           suno:'fast-paced drum and bass with rolling breakbeats and deep sub bass' },
+      edm_synthwave:         { genre:'synthwave',                suno:'retro-futuristic synthwave with pulsing arpeggios' },
+      orchestral_neoclassical:{ genre:'neoclassical',           suno:'intimate neoclassical piano and strings' },
+      orchestral_symphonic:  { genre:'symphonic orchestral',    suno:'full symphonic orchestral arrangement with sweeping strings and brass' },
+      atmospheric_darkambient:{ genre:'dark ambient',           suno:'dark ambient soundscape with slow-evolving textures' },
+      atmospheric_industrial:{ genre:'industrial',              suno:'industrial texture with mechanical rhythms and harsh timbres' },
+      atmospheric_gothic:    { genre:'gothic',                  suno:'gothic atmosphere with brooding organ and choir textures' },
+      ballad_piano:           { genre:'piano ballad',           suno:'intimate piano ballad with sparse, emotive accompaniment' },
+      ballad_strings:         { genre:'string ballad',          suno:'string-laden ballad with lush, emotive orchestration' },
+      epic_trailer:           { genre:'hybrid trailer music',   suno:'hybrid trailer music with pounding percussion and rising orchestral swells' },
+      epic_orchrock:          { genre:'epic orchestral rock',   suno:'epic orchestral rock fusing distorted guitars with full orchestra' }
     },
     // スケールが与える色彩感
     scale: {
@@ -143,6 +184,22 @@ window.PROMPT_DICTIONARY = {
   // ──────────────────────────────
   // INSTRUMENTATION
   // ──────────────────────────────
+  // ──────────────────────────────
+  // ★ v9.0 CHARACTER: ボーカル性格・声質（MOOD_SYSTEM.charactersのidに対応）
+  // 数値パラメータへの変換ができない項目のみを対象とする。
+  // rhythmic/playful（既存2種）はリズム感の変化のみを担うため、ここには含めない。
+  // ──────────────────────────────
+  character: {
+    breathy_female:    'breathy female vocal',
+    powerful_belting:  'powerful belting vocal',
+    soft_whisper:      'soft whisper vocal',
+    choir_harmonies:   'layered choir harmonies',
+    raspy_rock:        'raspy rock vocal',
+    cute_high_pitched:  'cute high-pitched vocal',
+    spoken_word_rap:   'spoken-word rap delivery',
+    operatic:          'operatic vocal'
+  },
+
   instrumentation: {
     names: {
       mel:'lead vocal melody', gtr:'strummed guitar', bas:'bass',

@@ -128,6 +128,16 @@ function compileSunoStylePrompt(songJson){
     sections.push('ending with '+D.structure.ending[basic.ending]);
   }
 
+  // 9. ★ v9.0 Vocal Character（MOOD_SYSTEM CharacterのsunoVocal語彙。数値解決とは独立の追加ステップ）
+  var charFrags=[];
+  var characters=mood.characters||[];
+  characters.forEach(function(cid){
+    var v=D.character&&D.character[cid];
+    if(v)charFrags.push(v);
+  });
+  charFrags=_dedupe(charFrags);
+  if(charFrags.length)sections.push(charFrags.join(', '));
+
   // 最終組み立て：重複を除去し、自然な1つのPromptにまとめる
   sections=_dedupe(sections);
   return sections.join('. ')+'.';
