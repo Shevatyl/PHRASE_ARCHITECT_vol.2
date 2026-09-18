@@ -111,6 +111,18 @@ var MOOD_SYSTEM = {
         nb:[0,1,2,3,2,2,0,0,1,0,0], struct:'jpop', end:'hold'} },
       orchrock: { name:'Epic Orchestral Rock', base:{pc:.65,lp:.50,ar:.45,cd:.55,rr:.25,vr:.25,ts:'4/4',
         nb:[0,1,3,3,1,2,0,0,1,0,0], struct:'jpop', end:'hold'} }
+    }},
+
+    // ★ 追加ジャンル: Hip-Hop（4サブジャンル）
+    hiphop: { name:'Hip-Hop', subgenres: {
+      boombap: { name:'Boom Bap', base:{pc:.45,lp:.20,ar:-.05,cd:.55,rr:.35,vr:.25,ts:'4/4',
+        nb:[0,1,3,3,1,1,0,0,1,0,0], struct:'jpop', end:'fade'} },
+      trap: { name:'Trap', base:{pc:.45,lp:.25,ar:.05,cd:.45,rr:.30,vr:.30,ts:'4/4',
+        nb:[0,0,2,2,4,1,0,0,1,1,1], struct:'tiktok', end:'fade'} },
+      oldschool: { name:'Old School', base:{pc:.50,lp:.15,ar:.10,cd:.55,rr:.35,vr:.20,ts:'4/4',
+        nb:[0,1,3,3,1,1,0,0,1,0,0], struct:'jpop', end:'fade'} },
+      lofihiphop: { name:'Lo-Fi Hip-Hop', base:{pc:.45,lp:.15,ar:-.10,cd:.55,rr:.40,vr:.25,ts:'4/4',
+        nb:[1,2,3,2,0,1,0,1,1,0,0], struct:'folk', end:'fade'} }
     }}
   },
 
@@ -157,9 +169,92 @@ var MOOD_SYSTEM = {
     raspy_rock:         { name:'Raspy Rock',          mod:{lp:+.15, ar:+.15},     sunoVocal:'raspy rock vocal' },
     cute_high_pitched:  { name:'Cute High-Pitched',   mod:{lp:+.10, vr:+.10},     sunoVocal:'cute high-pitched vocal' },
     spoken_word_rap:    { name:'Spoken-Word / Rap',   mod:{rr:+.20, vr:+.20},     sunoVocal:'spoken-word rap delivery' },
-    operatic:           { name:'Operatic',            mod:{ar:+.15},              sunoVocal:'operatic vocal' }
+    operatic:           { name:'Operatic',            mod:{ar:+.15},              sunoVocal:'operatic vocal' },
+
+    // ★ 追加CHARACTER 2種
+    airy_falsetto:      { name:'Airy Falsetto',       mod:{lp:-.05, ar:+.10},     sunoVocal:'airy falsetto vocal' },
+    gruff_baritone:     { name:'Gruff Baritone',       mod:{lp:+.05, ar:-.10},     sunoVocal:'gruff baritone vocal' }
   }
 };
+
+// ══════════════════════════════════════════════
+// ★ GENRE PRESET CHAIN — STEP03/05/06への一括反映
+// 既存 MOOD_SYSTEM / applyMoodSystem() は無改変（additive-only）
+// 粒度: ジャンル単位（15種）。SUBGENREが複数あるジャンルは先頭サブジャンルの雰囲気に合わせて選定
+// inst に記載のない楽器キーは自動でoff（案X）
+// ══════════════════════════════════════════════
+var GENRE_PRESET_CHAIN = {
+  folk:        { chordPreset:'major',    structPreset:'folk',
+    inst:{ mel:{on:true}, gtr:{on:true,basicPat:0,artPat:0}, bas:{on:true,st:0}, drm:{on:true,st:5} } },
+  pop:         { chordPreset:'p1564',    structPreset:'jpop',
+    inst:{ mel:{on:true}, gtr:{on:true,basicPat:3,artPat:0}, bas:{on:true,st:0}, drm:{on:true,st:0} } },
+  jazz:        { chordPreset:'p251',     structPreset:'folk',
+    inst:{ mel:{on:true}, piano:{on:true,st:1}, bas:{on:true,st:1}, drm:{on:true,st:5} } },
+  cinematic:   { chordPreset:'pAxis',    structPreset:'jpop',
+    inst:{ mel:{on:true}, str:{on:true,st:0}, piano:{on:true,st:0}, drm:{on:true,st:7}, bas:{on:true,st:4} } },
+  lofi:        { chordPreset:'pJTTOU',   structPreset:'folk',
+    inst:{ mel:{on:true}, piano:{on:true,st:1}, bas:{on:true,st:0}, drm:{on:true,st:8} } },
+  citypop:     { chordPreset:'p1625',    structPreset:'jpop',
+    inst:{ mel:{on:true}, gtr:{on:true,basicPat:3,artPat:4}, bas:{on:true,st:1}, drm:{on:true,st:6} } },
+  vocaloidpop: { chordPreset:'p1564',    structPreset:'tiktok',
+    inst:{ mel:{on:true}, gtr:{on:true,basicPat:4,artPat:0}, bas:{on:true,st:2}, drm:{on:true,st:3} } },
+  electropop:  { chordPreset:'p6451',    structPreset:'jpop',
+    inst:{ mel:{on:true}, gtr:{on:true,basicPat:3,artPat:2}, bas:{on:true,st:4}, drm:{on:true,st:0} } },
+  rock:        { chordPreset:'p1541',    structPreset:'jpop',
+    inst:{ mel:{on:true}, gtr:{on:true,basicPat:3,artPat:0}, bas:{on:true,st:0}, drm:{on:true,st:3} } },
+  rnb:         { chordPreset:'p2516',    structPreset:'folk',
+    inst:{ mel:{on:true}, piano:{on:true,st:1}, bas:{on:true,st:1}, drm:{on:true,st:5} } },
+  edm:         { chordPreset:'pModal',   structPreset:'jpop',
+    inst:{ mel:{on:true}, bas:{on:true,st:4}, drm:{on:true,st:0} } },
+  orchestral:  { chordPreset:'p1625',    structPreset:'folk',
+    inst:{ mel:{on:true}, piano:{on:true,st:0}, str:{on:true,st:0} } },
+  atmospheric: { chordPreset:'pMinLoop', structPreset:'folk',
+    inst:{ mel:{on:true}, str:{on:true,st:0}, bas:{on:true,st:4} } },
+  ballad:      { chordPreset:'p4536',    structPreset:'folk',
+    inst:{ mel:{on:true}, piano:{on:true,st:0}, str:{on:true,st:0} } },
+  epic:        { chordPreset:'pAxis',    structPreset:'jpop',
+    inst:{ mel:{on:true}, str:{on:true,st:0}, piano:{on:true,st:0}, drm:{on:true,st:7}, bas:{on:true,st:4} } },
+  hiphop:      { chordPreset:'pBlues',   structPreset:'tiktok',
+    inst:{ mel:{on:true}, bas:{on:true,st:0}, drm:{on:true,st:0} } }
+};
+
+// target: 'chord'(STEP03) / 'struct'(STEP05) / 'inst'(STEP06)
+// 判定基準はcurGenreのみ（SUBGENRE/MOOD/CHARACTERは無視）
+function applyGenrePresetChain(target){
+  var chain = GENRE_PRESET_CHAIN[curGenre];
+  if(!chain){ alert('このGENREにはプリセットが定義されていません。'); return; }
+  var g = MOOD_SYSTEM.genres[curGenre];
+  var gName = g ? g.name : curGenre;
+  var stepNames = { chord:'コード進行（STEP03）', struct:'楽曲ストラクチャー（STEP05）', inst:'楽器 & スタイル（STEP06）' };
+  var ok = confirm('現在の'+stepNames[target]+'の設定を「'+gName+'」のプリセットで上書きします。よろしいですか？');
+  if(!ok) return;
+
+  if(target==='chord'){
+    curCP = chain.chordPreset;
+    var btn = document.querySelector('#CP_BTNS [data-cp="'+curCP+'"]');
+    if(btn) selCP(btn); else updateCPPreview();
+  } else if(target==='struct'){
+    presetStruct(chain.structPreset);
+  } else if(target==='inst'){
+    if(!partInst['MAIN']) partInst['MAIN']=defPartInst();
+    var main = partInst['MAIN'];
+    Object.keys(INST_DEFS).forEach(function(key){
+      if(!main[key]) return;
+      var setting = chain.inst[key];
+      if(setting){
+        main[key].on = true;
+        if(setting.st!==undefined) main[key].st = setting.st;
+        if(key==='gtr'){
+          if(setting.basicPat!==undefined) main[key].basicPat = setting.basicPat;
+          if(setting.artPat!==undefined) main[key].artPat = setting.artPat;
+        }
+      } else {
+        main[key].on = false;
+      }
+    });
+    buildPartTabs();
+  }
+}
 
 var curGenre='folk', curSubGenre='acoustic', curMoodTag='neutral', curCharacters=[];
 
@@ -220,7 +315,8 @@ var _MS_LEGACY_SUBGENRE_KEY = {
   neoclassical:'orchestral_neoclassical', symphonic:'orchestral_symphonic',
   darkambient:'atmospheric_darkambient', industrial:'atmospheric_industrial', gothic:'atmospheric_gothic',
   piano:'ballad_piano', strings:'ballad_strings',
-  trailer:'epic_trailer', orchrock:'epic_orchrock'
+  trailer:'epic_trailer', orchrock:'epic_orchrock',
+  boombap:'hiphop_boombap', trap:'hiphop_trap', oldschool:'hiphop_oldschool', lofihiphop:'hiphop_lofihiphop'
 };
 function _msLegacyPresetKey(){
   if(curMoodTag && curMoodTag!=='neutral' && MOOD_SYSTEM.moods[curMoodTag]) return curMoodTag;

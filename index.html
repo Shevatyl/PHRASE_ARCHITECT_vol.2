@@ -437,6 +437,7 @@ canvas{width:100%;height:100%;}
   </div>
   <div class="step-body">
     <span class="lbl">共通プリセット</span>
+    <button class="pb" style="margin-bottom:8px;border-color:var(--ac4);color:var(--ac4)" onclick="applyGenrePresetChain('chord')">🔄 GENREプリセットを反映</button>
     <div class="cp-grid" id="CP_BTNS">
       <button class="cpb on" data-cp="major" onclick="selCP(this)"><span class="cpn">🎵 ダイアトニック</span><span class="cpd">I IIm IV V VIm</span></button>
       <button class="cpb" data-cp="p1564" onclick="selCP(this)"><span class="cpn">👑 1564進行</span><span class="cpd">I V VIm IV</span></button>
@@ -541,6 +542,7 @@ canvas{width:100%;height:100%;}
     <div class="step-num">05</div><div><div class="step-title">楽曲ストラクチャー</div><div class="step-sub">Phrase Libraryからパートを配置 / クイック追加も可能</div></div><span class="step-arrow">▼</span>
   </div>
   <div class="step-body">
+    <button class="pb" style="margin-bottom:8px;border-color:var(--ac4);color:var(--ac4)" onclick="applyGenrePresetChain('struct')">🔄 GENREプリセットを反映</button>
     <!-- Phrase Libraryからの配置 -->
     <div style="margin-bottom:10px;">
       <span class="lbl">Phrase Libraryから配置</span>
@@ -598,6 +600,7 @@ canvas{width:100%;height:100%;}
     <div style="font-family:'Space Mono',monospace;font-size:7px;color:var(--mt);margin-bottom:8px;line-height:1.7">
       ★ <span style="color:var(--ac5)">MAIN</span>タブで全パート共通の楽器設定。各パーツのタブで「個別設定」をONにすると上書き可能。
     </div>
+    <button class="pb" style="margin-bottom:8px;border-color:var(--ac4);color:var(--ac4)" onclick="applyGenrePresetChain('inst')">🔄 GENREプリセットを反映</button>
     <div class="part-tabs" id="PART_TABS"></div>
     <div id="PART_PANELS"></div>
     <div style="font-family:'Space Mono',monospace;font-size:8px;color:var(--mt);margin-top:8px">※ STEP5でパートを追加するとタブが増えます</div>
